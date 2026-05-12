@@ -142,8 +142,8 @@ TEXTS = {
         'req_contact': "Для регистрации поделитесь вашим номером телефона.",
         'contact_btn': "📱 Поделиться контактом",
         'thanks': "Спасибо, {name}! Вы успешно зарегистрированы.",
-        'agreement': "⚠️ Правила академии:\n1. Не пересылать видео.\n2. В AI запрещен мат и оффтоп.\n3. Попытки взлома — БАН.\n\nВы согласны?",
-        'agree_btn': "✅ Согласен(а)",
+        'agreement': "⚠️ *ПРАВИЛА И УСЛОВИЯ YUKSAK ACADEMY:*\n\n1. **Конфиденциальность:** Запрещено копировать, скачивать или пересылать видео-уроки третьим лицам. Все материалы защищены авторским правом.\n2. **ИИ Помощник:** В общении с ИИ строго запрещен мат, оскорбления и оффтоп. ИИ предназначен только для обучения.\n3. **Безопасность:** Любые попытки взлома, поиска уязвимостей или использования админ-команд приведут к немедленной блокировке (БАН) без возврата средств.\n4. **Уважение:** Мы ценим каждого студента и ожидаем взаимного уважения.\n5. **Аккаунты:** Один аккаунт предназначен для одного человека. Использование одного аккаунта несколькими лицами запрещено.\n6. **Возврат:** После получения доступа к цифровым материалам возврат средств не производится.\n7. **Обновления:** Академия оставляет за собой право обновлять материалы и правила.\n\nВы подтверждаете, что прочитали и согласны с правилами?",
+        'agree_btn': "✅ Согласен(а) и принимаю условия",
         'courses_btn': "📚 Мои Курсы", 'subs_btn': "💎 Тарифы", 'ai_btn': "🤖 ИИ Помощник", 'support_btn': "📞 Тех. поддержка", 'founder_btn': "👨‍💼 Основатель", 'back_btn': "⬅️ Назад",
         'access_granted': "Отлично! Вам доступны разделы платформы.",
         'subs_info': "💎 Тарифы (на 1 месяц):\n\n🥉 Standard — 60,000 сум\n(Доступ к 1 курсу, 200 AI вопросов)\n\n🥈 Platinum — 120,000 сум\n(Доступ к 2 курсам, 400 AI вопросов)\n\n🥇 VIP — 2,000,000 сум\n(ВСЕ курсы + 5,000 AI вопросов)\n\n⚠️ ВНИМАНИЕ: Бан за мат или оффтоп!",
@@ -163,7 +163,7 @@ TEXTS = {
         'req_contact': "Ro'yxatdan o'tish uchun telefon raqamingizni yuboring.",
         'contact_btn': "📱 Kontaktni yuborish",
         'thanks': "Rahmat, {name}! Ro'yxatdan o'tdingiz.",
-        'agreement': "⚠️ Akademiya qoidalari:\n1. Videolarni tarqatmang.\n2. AI da so'kinmang.\n3. Xakerlik urinishi — BAN.\n\nRozimisiz?",
+        'agreement': "⚠️ *YUKSAK ACADEMY QOIDALARI:*\n\n1. **Maxfiylik:** Videolarni ko'chirish yoki tarqatish taqiqlanadi. Barcha huquqlar himoyalangan.\n2. **AI Yordamchi:** So'kinish va o'rinsiz gaplar taqiqlanadi. Faqat ta'lim uchun.\n3. **Xavfsizlik:** Tizimni buzishga urinish bloklanishga sabab bo'ladi.\n4. **Hurmat:** O'zaro hurmat majburiy.\n5. **Hisoblar:** Bir kishi uchun bitta profil.\n6. **To'lov:** Kursga kirish ruxsati berilgach, pul qaytarilmaydi.\n7. **Yangilanish:** Akademiya qoidalarni o'zgartirish huquqiga ega.\n\nQoidalarni qabul qilasizmi?",
         'agree_btn': "✅ Roziman",
         'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Tex. yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga",
         'access_granted': "Platformadan foydalanishingiz mumkin.",
@@ -208,6 +208,18 @@ def detect_attack(t):
         for p in ps:
             if p.lower() in t_l: return r
     return None
+
+def get_main_kb(lang):
+    t = TEXTS.get(lang, TEXTS['ru'])
+    return {
+        "keyboard": [
+            [{"text": t['courses_btn']}],
+            [{"text": t['ai_btn']}],
+            [{"text": t['subs_btn']}],
+            [{"text": t['founder_btn']}, {"text": t['support_btn']}]
+        ],
+        "resize_keyboard": True
+    }
 
 def send_msg(cid, txt, kb=None):
     is_owner = str(cid) in OWNER_IDS
@@ -292,7 +304,10 @@ def handle_update(upd):
             items = [[{"text": c}] for c in t['categories'].values()]
             send_msg(cid, "📁 Category:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
         elif u['step'] == "admin_video_cat" and txt:
-            if txt == t['back_btn']: db.update_user(uid, step="main"); send_msg(cid, "OK", kb={"keyboard": [[{"text": t['courses_btn']}]], "resize_keyboard": True}); return
+            if txt == t['back_btn']: 
+                db.update_user(uid, step="main")
+                send_msg(cid, "OK", kb=get_main_kb(lang))
+                return
             cat_id = [k for k, v in t['categories'].items() if v == txt]
             if cat_id:
                 db.update_user(uid, step=f"admin_video_course_{cat_id[0]}")
@@ -344,7 +359,7 @@ def handle_update(upd):
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en'); db.update_user(uid, lang=l, step="contact" if not u.get('phone') else "main")
         t_new = TEXTS[l]
         if not u.get('phone'): send_msg(cid, t_new['welcome']); send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True})
-        else: send_msg(cid, t_new['access_granted'], kb={"keyboard": [[{"text": t_new['courses_btn']}], [{"text": t_new['ai_btn']}]], "resize_keyboard": True})
+        else: send_msg(cid, t_new['access_granted'], kb=get_main_kb(l))
         return
 
     if u['step'] == "contact" and 'contact' in m:
@@ -352,20 +367,27 @@ def handle_update(upd):
         send_msg(cid, t['thanks'].format(name=c.get('first_name'), phone=c['phone_number'])); send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True}); return
 
     if u['step'] == "agreement" and txt == t['agree_btn']:
-        db.update_user(uid, step="main", agreed=1); send_msg(cid, t['access_granted'], kb={"keyboard": [[{"text": t['courses_btn']}], [{"text": t['ai_btn']}], [{"text": t['subs_btn']}], [{"text": t['founder_btn']}, {"text": t['support_btn']}]], "resize_keyboard": True}); return
+        db.update_user(uid, step="main", agreed=1)
+        send_msg(cid, t['access_granted'], kb=get_main_kb(lang))
+        return
 
     if txt == t['ai_btn']: db.update_user(uid, step="ai_chat"); send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True})
     elif txt == t['subs_btn']: db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "🥉 Standard"}, {"text": "🥈 Platinum"}], [{"text": "🥇 VIP"}, {"text": t['back_btn']}]], "resize_keyboard": True})
-    elif txt == t['support_btn'] or "поддержка" in txt.lower() or "yordam" in txt.lower():
-        send_msg(cid, "📞 @yuksak_it\n📞 +998 50 777 51 52")
+    elif txt == t['support_btn'] or "поддержка" in txt.lower() or "yordam" in txt.lower() or "support" in txt.lower():
+        send_msg(cid, "📞 @yuksak_it\n📞 +998 50 777 51 52", kb=get_main_kb(lang))
     elif txt == t['founder_btn']:
-        send_msg(cid, "👨‍💼 Asoschi: @kamolov_it\nPlatforma asoschisi bilan bog'lanish.")
-    elif txt == t['back_btn']: db.update_user(uid, step="main"); send_msg(cid, "OK", kb={"keyboard": [[{"text": t['courses_btn']}]], "resize_keyboard": True})
+        send_msg(cid, "👨‍💼 Asoschi: @kamolov_it\nPlatforma asoschisi bilan bog'lanish.", kb=get_main_kb(lang))
+    elif txt == t['back_btn']: 
+        db.update_user(uid, step="main")
+        send_msg(cid, "OK", kb=get_main_kb(lang))
     elif txt in ["🥉 Standard", "🥈 Platinum", "🥇 VIP"]:
         tk = txt.split()[1].lower(); kb = {"inline_keyboard": [[{"text": "Payme", "callback_data": f"pay_payme_{tk}"}], [{"text": "Click", "callback_data": f"pay_click_{tk}"}]]}
         send_msg(cid, f"Payment: {txt}", kb=kb)
     elif u['step'] == "ai_chat" and txt:
-        if txt == t['back_btn']: db.update_user(uid, step="main"); send_msg(cid, "OK", kb={"keyboard": [[{"text": t['courses_btn']}]], "resize_keyboard": True}); return
+        if txt == t['back_btn']: 
+            db.update_user(uid, step="main")
+            send_msg(cid, "OK", kb=get_main_kb(lang))
+            return
         send_msg(cid, t['ai_thinking']); resp = get_ai_resp(txt)
         if "VIOLATION_DETECTED" in resp:
             v = u['violations']+1; db.update_user(uid, violations=v)

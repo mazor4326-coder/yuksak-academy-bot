@@ -47,6 +47,28 @@ HACK_PATTERNS = {
     "Injections": ["<script>", "javascript:", "eval(", "drop table", "union select"]
 }
 
+# SO'KINISH DETEKTORI (RU + UZ Kirill + UZ Latin)
+BAD_WORDS = [
+    # Rus tilidagi so'kinishlar
+    "бля", "блять", "блядь", "сука", "пизда", "пиздец", "хуй", "хуйня", "ебать", "ёбаный",
+    "ебаный", "еблан", "мудак", "мудила", "залупа", "пиздун", "ёб", "еб", "ёбт", "нахуй",
+    "похуй", "пиздато", "хуйло", "ёбаный", "пиздёж", "гандон", "долбоёб", "шлюха",
+    # O'zbek lotin yozuvida
+    "orospu", "qotib", "sikib", "sik", "sikin", "sikay", "amak", "amaki", "harom",
+    "haromzoda", "kaltak", "yalama", "yalamchi", "sassiq", "it bola", "itbola",
+    "xarom", "xaromzoda", "jallob", "fahsh", "boshqa",
+    # O'zbek kirill yozuvida
+    "орос", "оросу", "сик", "сикиб", "амак", "ялама", "харом", "харомзода",
+    "жаллоб", "қотиб", "ит бола", "итбола", "сассиқ"
+]
+
+def detect_profanity(text):
+    if not text: return False
+    t = text.lower()
+    for w in BAD_WORDS:
+        if w in t: return True
+    return False
+
 DB_NAME = "yuksak.db"
 
 class Database:
@@ -332,7 +354,8 @@ def handle_update(upd):
                   [{"text": "🔍 Атака детали"}, {"text": "📈 Аналитика"}],
                   [{"text": "💰 Финансы"}, {"text": "👥 Участники"}],
                   [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}],
-                  [{"text": "📢 Объявление"}, {"text": "⬅️ В меню"}]]
+                  [{"text": "📢 Объявление"}, {"text": "🔎 Поиск пользователя"}],
+                  [{"text": "⬅️ В меню"}]]
             send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
         else:
             send_msg(cid, "❌ Bu buyruq mavjud emas.")
@@ -386,14 +409,40 @@ def handle_update(upd):
             send_msg(cid, "🎬 Видео юклаш — kategoriyani tanlang:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
         elif txt == "🤖 AI логи":
             all_u = list(db.get_all_users().values())
-            lines = [f"👤 {x.get('name','?')}: {x.get('ai_count',0)} savol" for x in sorted(all_u, key=lambda x: x.get('ai_count', 0), reverse=True)[:10]]
+            lines = []
+            for x in sorted(all_u, key=lambda x: x.get('ai_count', 0), reverse=True)[:10]:
+                viol = x.get('violations', 0)
+                status = f"⚠️ {viol} buzarlik" if viol > 0 else "✅"
+                lines.append(f"👤 {x.get('name','?')}: {x.get('ai_count',0)} savol | {status}")
             send_msg(cid, "🤖 *AI ЛОГИ (Top 10):*\n\n" + "\n".join(lines) if lines else "Пусто")
+        elif txt == "🔎 Поиск пользователя":
+            db.update_user(uid, step="admin_search")
+            send_msg(cid, "🔎 *Foydalanuvchini qidirish:*\n\nID, telefon raqami (+998...) yoki @username yuboring:", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
         elif txt == "📢 Объявление":
             db.update_user(uid, step="admin_broadcast")
             send_msg(cid, "📢 Barcha foydalanuvchilarga yuboriladigan xabarni yozing:\n\n(Bekor qilish uchun /admin yozing)", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
         elif txt == "⬅️ В меню":
             db.update_user(uid, step="main")
             send_msg(cid, "OK", kb=get_main_kb(lang))
+        return
+
+    if u['step'] == "admin_search" and is_owner and txt:
+        if txt == "⬅️ В меню":
+            db.update_user(uid, step="admin_main")
+            kb = [[{"text": "📊 Статистика"}, {"text": "🚨 Атака"}], [{"text": "🔍 Атака детали"}, {"text": "📈 Аналитика"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}], [{"text": "📢 Объявление"}, {"text": "🔎 Поиск пользователя"}], [{"text": "⬅️ В меню"}]]
+            send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
+        else:
+            q = txt.strip().lower().replace("@", "")
+            all_u = db.get_all_users()
+            found = None
+            for user_id, user in all_u.items():
+                if q == user_id or q == (user.get('phone') or '').replace('+', '') or q == (user.get('username') or '').lower():
+                    found = user; break
+            if found:
+                viol = found.get('violations', 0)
+                send_msg(cid, f"✅ *TOPILDI:*\n\n👤 {found.get('name','?')}\n🆔 `{found.get('id','?')}`\n📞 `{found.get('phone','?')}`\n👤 @{found.get('username','?')}\n💎 Tarif: {found.get('sub','none')}\n⚠️ Buzarliklar: {viol}\n🚫 Ban: {'Ha' if found.get('banned') else "Yo'q"}")
+            else:
+                send_msg(cid, "❌ Foydalanuvchi topilmadi. ID, +998... yoki @username to'g'ri kiriting.")
         return
 
     if u['step'] == "admin_broadcast" and is_owner and txt:
@@ -443,11 +492,31 @@ def handle_update(upd):
             db.update_user(uid, step="main")
             send_msg(cid, "OK", kb=get_main_kb(lang))
             return
+        # So'kinish detektori - barcha tillarda
+        if detect_profanity(txt):
+            v = u['violations'] + 1
+            db.update_user(uid, violations=v)
+            remaining = 3 - v
+            if v >= 3:
+                db.update_user(uid, banned=1)
+                # Adminga xabar
+                alert = f"🚨 *BAN:* {u.get('name')} (@{u.get('username')})\n🆔 `{uid}`\n💬 `{txt}`\n📌 So'kindi → BAN"
+                for oid in OWNER_IDS: send_msg(oid, alert)
+                send_msg(cid, t['user_banned'])
+            else:
+                warn_msgs = {
+                    'ru': f"⚠️ *ПРЕДУПРЕЖДЕНИЕ #{v}/3!*\n\nВы нарушили правила бота (нецензурная лексика).\n\n🚫 Осталось предупреждений: {remaining}\nЕсли ещё {remaining} раз нарушите — ваш аккаунт будет *заблокирован навсегда!*",
+                    'uz': f"⚠️ *OGOHLANTIRISH #{v}/3!*\n\nSiz bot qoidalarini buzdingiz (so'kinish).\n\n🚫 Qolgan ogohlantirishlar: {remaining}\nYana {remaining} marta buzarsangiz — hisobingiz *abadiy bloklanadi!*",
+                    'en': f"⚠️ *WARNING #{v}/3!*\n\nYou violated bot rules (profanity).\n\n🚫 Remaining warnings: {remaining}\nIf you violate {remaining} more times — your account will be *permanently banned!*"
+                }
+                send_msg(cid, warn_msgs.get(lang, warn_msgs['ru']))
+            return
         send_msg(cid, t['ai_thinking']); resp = get_ai_resp(txt)
         if "VIOLATION_DETECTED" in resp:
             v = u['violations']+1; db.update_user(uid, violations=v)
+            remaining = 3 - v
             if v>=3: db.update_user(uid, banned=1); send_msg(cid, t['user_banned'])
-            else: send_msg(cid, t['ai_violation'].format(count=v))
+            else: send_msg(cid, t['ai_violation'].format(count=v) + f"\n🚫 Qoldi: {remaining} ta")
         else: send_msg(cid, resp.replace("*","")); db.update_user(uid, ai_count=u['ai_count']+1)
     elif txt == t['courses_btn']:
         db.update_user(uid, step="cats"); items = [{"text": c} for c in t['categories'].values()]

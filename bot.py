@@ -93,6 +93,7 @@ class Database:
             curr.execute("CREATE TABLE IF NOT EXISTS payments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount INTEGER, date TEXT, phone TEXT, tariff TEXT)")
             curr.execute("CREATE TABLE IF NOT EXISTS hacker_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, username TEXT, phone TEXT, bad_text TEXT, reason TEXT, timestamp TEXT)")
             curr.execute("CREATE TABLE IF NOT EXISTS interests (category TEXT PRIMARY KEY, user_ids TEXT DEFAULT '[]')")
+            curr.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
             conn.commit(); conn.close()
 
     def get_user(self, uid):
@@ -154,6 +155,14 @@ class Database:
     def get_interests_all(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM interests").fetchall(); c.close()
         return {r['category']: json.loads(r['user_ids']) for r in rows}
+
+    def get_setting(self, key):
+        c = self.get_conn(); r = c.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone(); c.close()
+        return r['value'] if r else None
+
+    def set_setting(self, key, value):
+        with self.lock:
+            c = self.get_conn(); c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", (key, value)); c.commit(); c.close()
 
 db = Database(DB_NAME)
 
@@ -254,6 +263,65 @@ def send_msg(cid, txt, kb=None):
         print(f"[!] Xabar yuborishda xato ({cid}): {e}", flush=True)
         return False
 
+def send_photo(cid, photo_id, caption=None, kb=None):
+    p = {'chat_id': cid, 'photo': photo_id, 'parse_mode': 'Markdown'}
+    if caption: p['caption'] = caption
+    if kb: p['reply_markup'] = json.dumps(kb)
+    try:
+        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto", data=urllib.parse.urlencode(p).encode('utf-8'), timeout=10)
+        return True
+    except Exception as e:
+        print(f"[!] Rasm yuborishda xato ({cid}): {e}", flush=True)
+        return False
+
+FOUNDER_BIO = {
+    'ru': (
+        "👨‍💼 *Комолов Абдулазиз Шерзодбекович*\n"
+        "_Инженер международного класса & IT-предприниматель_\n\n"
+        "📚 *Образование и квалификация:*\n"
+        "🎓 Международный двойной диплом (Узбекистан & Беларусь)\n"
+        "• Белорусский национальный технический университет (БНТУ), г. Минск\n"
+        "• Андижанский машиностроительный институт (AndMI)\n"
+        "• Направление: «Интеллектуальные приборы и машины производства»\n"
+        "• Формат: Совместная международная программа\n"
+        "• Базовая подготовка: 9 лет в русском классе + 2 года в профильном лицее\n\n"
+        "💼 *Профессиональный опыт:*\n"
+        "🏆 Основатель «Yuksak Academy» — разработчик и руководитель образовательной платформы\n"
+        "🎓 Преподаватель специальных дисциплин (Построение машин и механизмов)\n"
+        "🏭 Инженерная практика в международной компании UZ DONGWON"
+    ),
+    'uz': (
+        "👨‍💼 *Kamolov Abdulaziz Sherzodbekovich*\n"
+        "_Xalqaro darajali muhandis & IT-tadbirkor_\n\n"
+        "📚 *Ta'lim va malaka:*\n"
+        "🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n"
+        "• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n"
+        "• Andijon mashinasozlik instituti (AndMI)\n"
+        "• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n"
+        "• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n"
+        "• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n"
+        "💼 *Kasbiy tajriba:*\n"
+        "🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n"
+        "🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n"
+        "🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti"
+    ),
+    'en': (
+        "👨‍💼 *Kamolov Abdulaziz Sherzodbekovich*\n"
+        "_International-class Engineer & IT Entrepreneur_\n\n"
+        "📚 *Education & Qualifications:*\n"
+        "🎓 International Double Degree (Uzbekistan & Belarus)\n"
+        "• Belarusian National Technical University (BNTU), Minsk\n"
+        "• Andijan Machine-Building Institute (AndMI)\n"
+        "• Field: «Intelligent Instruments and Production Machinery»\n"
+        "• Format: Joint International Program, credit-module system\n"
+        "• Pre-university: 9 years Russian-medium + 2 years specialized lyceum\n\n"
+        "💼 *Professional Experience:*\n"
+        "🏆 Founder of «Yuksak Academy» — developer & head of the ed-tech platform\n"
+        "🎓 Lecturer of special disciplines (Machine & Mechanism Design)\n"
+        "🏭 Engineering practice at international company UZ DONGWON"
+    )
+}
+
 def send_vid(cid, vid, cap=None, kb=None):
     is_owner = str(cid) in OWNER_IDS
     p = {'chat_id': cid, 'video': vid, 'protect_content': str(not is_owner).lower(), 'parse_mode': 'Markdown'}
@@ -321,6 +389,12 @@ def handle_update(upd):
         send_msg(cid, t['user_banned']); return
 
     if is_owner:
+        if 'photo' in m:
+            # Admin rasm yuborsa - asoschi fotosi sifatida saqlaydi
+            photo_id = m['photo'][-1]['file_id']  # Eng katta o'lchamdagi rasm
+            db.set_setting('founder_photo', photo_id)
+            send_msg(cid, "✅ Asoschi fotosi saqlandi! Endi 'Asoschi' tugmasi bosilganda bu rasm ko'rinadi.", kb=get_main_kb(lang))
+            return
         if 'video' in m:
             db.update_user(uid, temp_video_id=m['video']['file_id'], step="admin_video_cat")
             items = [[{"text": c}] for c in t['categories'].values()]
@@ -485,7 +559,12 @@ def handle_update(upd):
         }
         send_msg(cid, support_msgs.get(lang, support_msgs['ru']), kb=get_main_kb(lang))
     elif txt == t['founder_btn']:
-        send_msg(cid, "👨‍💼 Asoschi: @kamolov_it\nPlatforma asoschisi bilan bog'lanish.", kb=get_main_kb(lang))
+        bio = FOUNDER_BIO.get(lang, FOUNDER_BIO['ru'])
+        founder_photo = db.get_setting('founder_photo')
+        if founder_photo:
+            send_photo(cid, founder_photo, caption=bio, kb=get_main_kb(lang))
+        else:
+            send_msg(cid, bio, kb=get_main_kb(lang))
     elif txt == t['back_btn']: 
         db.update_user(uid, step="main")
         send_msg(cid, "OK", kb=get_main_kb(lang))

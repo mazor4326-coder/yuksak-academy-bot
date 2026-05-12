@@ -328,24 +328,45 @@ def handle_update(upd):
     if txt == '/admin' or txt.lower() in ['admin', 'админ']:
         if is_owner:
             db.update_user(uid, step="admin_main")
-            kb = [[{"text": "📊 Статистика"}, {"text": "🚨 Атака (ДЕТАЛИ)"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "⬅️ В меню"}]]
-            send_msg(cid, "🛠️ Admin", kb={"keyboard": kb, "resize_keyboard": True})
+            kb = [[{"text": "📊 Статистика"}, {"text": "🚨 Атака"}],
+                  [{"text": "🔍 Атака детали"}, {"text": "📈 Аналитика"}],
+                  [{"text": "💰 Финансы"}, {"text": "👥 Участники"}],
+                  [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}],
+                  [{"text": "📢 Объявление"}, {"text": "⬅️ В меню"}]]
+            send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
         else:
-            # Oddiy foydalanuvchi admin yozsa - ogohlantiramiz
             send_msg(cid, "❌ Bu buyruq mavjud emas.")
         return
 
     if u['step'] == "admin_main" and txt:
         if txt == "📊 Статистика":
             all_u = db.get_all_users()
-            send_msg(cid, f"📈 Total: {len(all_u)}\n🎓 Students: {len([x for x in all_u.values() if x.get('unlocked')])}")
-        elif txt == "🚨 Атака (ДЕТАЛИ)":
+            total = len(all_u)
+            banned = len([x for x in all_u.values() if x.get('banned')])
+            subs = len([x for x in all_u.values() if x.get('sub') != 'none'])
+            ai_total = sum(x.get('ai_count', 0) for x in all_u.values())
+            send_msg(cid, f"📊 *СТАТИСТИКА:*\n\n👥 Всего: {total}\n💎 Подписчики: {subs}\n🚫 Забанены: {banned}\n🤖 AI запросов: {ai_total}")
+        elif txt == "🚨 Атака":
             logs = db.get_hacker_logs()
-            if not logs: send_msg(cid, "✅ Clean.")
+            if not logs: send_msg(cid, "✅ Атак не было.")
             else:
-                res = ["🚨 *ATTACK LOGS:*"]
-                for l in logs[:10]: res.append(f"📅 {l['timestamp']}\n👤 {l['name']} (@{l['username']})\n🆔 `{l['user_id']}`\n📞 `{l['phone']}`\n💬 `{l['bad_text']}`\n🛡️ {l['reason']}\n" + "━"*10)
-                send_msg(cid, "\n\n".join(res))
+                res = [f"🚨 {l['name']} (@{l['username']}) — {l['reason']}" for l in logs[:10]]
+                send_msg(cid, "🚨 *АТАКИ (кратко):*\n\n" + "\n".join(res))
+        elif txt == "🔍 Атака детали":
+            logs = db.get_hacker_logs()
+            if not logs: send_msg(cid, "✅ Чисто.")
+            else:
+                for l in logs[:5]:
+                    send_msg(cid, f"🚨 *АТАКА:*\n👤 {l['name']} (@{l['username']})\n🆔 `{l['user_id']}`\n📞 `{l['phone']}`\n💬 `{l['bad_text']}`\n🛡️ {l['reason']}\n📅 {l['timestamp']}")
+        elif txt == "📈 Аналитика":
+            all_u = list(db.get_all_users().values())
+            std = len([x for x in all_u if x.get('sub') == 'standard'])
+            plt = len([x for x in all_u if x.get('sub') == 'platinum'])
+            vip = len([x for x in all_u if x.get('sub') == 'vip'])
+            interests = db.get_interests_all()
+            top = sorted(interests.items(), key=lambda x: len(x[1]), reverse=True)[:3]
+            top_str = "\n".join([f"  {c}: {len(ids)} ta" for c, ids in top]) if top else "  Yo'q"
+            send_msg(cid, f"📈 *АНАЛИТИКА:*\n\n💎 Tariflar:\n  🥉 Standard: {std}\n  🥈 Platinum: {plt}\n  🥇 VIP: {vip}\n\n🔥 Top yo'nalishlar:\n{top_str}")
         elif txt == "💰 Финансы":
             ps = db.get_payments(); now = time.time()
             t_all = sum(p['amount'] for p in ps)
@@ -354,11 +375,39 @@ def handle_update(upd):
             t_30d = sum(p['amount'] for p in ps if now - time.mktime(time.strptime(p['date'], '%Y-%m-%d %H:%M:%S')) < 2592000)
             send_msg(cid, f"💰 *ФИНАНСЫ:*\n\n📈 Всего: {t_all:,} сум\n🕒 За 24ч: {t_24h:,} сум\n📅 За 7 дней: {t_7d:,} сум\n📆 За 30 дней: {t_30d:,} сум".replace(",", " "))
         elif txt == "👥 Участники":
-            all_u = db.get_all_users().values()
+            all_u = list(db.get_all_users().values())
             total = len(all_u); subs = len([x for x in all_u if x.get('sub') != 'none'])
             agreed = len([x for x in all_u if x.get('agreed')])
-            send_msg(cid, f"👥 *УЧАСТНИКИ:*\n\nВсего: {total}\nС подпиской: {subs}\nПриняли правила: {agreed}")
-        elif txt == "⬅️ В меню": db.update_user(uid, step="main"); send_msg(cid, "OK", kb={"keyboard": [[{"text": t['courses_btn']}]], "resize_keyboard": True})
+            lines = [f"👤 {x.get('name','?')} | {x.get('sub','none')} | {'🚫' if x.get('banned') else '✅'}" for x in all_u[:15]]
+            send_msg(cid, f"👥 *УЧАСТНИКИ:*\n\nВсего: {total} | Подписка: {subs} | Правила: {agreed}\n\n" + "\n".join(lines))
+        elif txt == "🎬 Видео контент":
+            db.update_user(uid, step="admin_video_cat")
+            items = [[{"text": c}] for c in t['categories'].values()]
+            send_msg(cid, "🎬 Видео юклаш — kategoriyani tanlang:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+        elif txt == "🤖 AI логи":
+            all_u = list(db.get_all_users().values())
+            lines = [f"👤 {x.get('name','?')}: {x.get('ai_count',0)} savol" for x in sorted(all_u, key=lambda x: x.get('ai_count', 0), reverse=True)[:10]]
+            send_msg(cid, "🤖 *AI ЛОГИ (Top 10):*\n\n" + "\n".join(lines) if lines else "Пусто")
+        elif txt == "📢 Объявление":
+            db.update_user(uid, step="admin_broadcast")
+            send_msg(cid, "📢 Barcha foydalanuvchilarga yuboriladigan xabarni yozing:\n\n(Bekor qilish uchun /admin yozing)", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
+        elif txt == "⬅️ В меню":
+            db.update_user(uid, step="main")
+            send_msg(cid, "OK", kb=get_main_kb(lang))
+        return
+
+    if u['step'] == "admin_broadcast" and is_owner and txt:
+        if txt == "⬅️ В меню" or txt == '/admin':
+            db.update_user(uid, step="admin_main")
+            kb = [[{"text": "📊 Статистика"}, {"text": "🚨 Атака"}], [{"text": "🔍 Атака детали"}, {"text": "📈 Аналитика"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}], [{"text": "📢 Объявление"}, {"text": "⬅️ В меню"}]]
+            send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
+        else:
+            all_u = db.get_all_users(); count = 0
+            for user_id in all_u:
+                if send_msg(user_id, f"📢 *ОБЪЯВЛЕНИЕ:*\n\n{txt}"): count += 1
+                time.sleep(0.05)
+            db.update_user(uid, step="admin_main")
+            send_msg(cid, f"✅ Xabar {count} ta foydalanuvchiga yuborildi!")
         return
 
     if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:

@@ -1,8 +1,24 @@
 import sys, urllib.request, urllib.parse, json, time, os, threading, re, sqlite3
 from dotenv import load_dotenv
+from flask import Flask
 
 # Load .env file if it exists (for local testing)
 load_dotenv()
+
+# Web server for Render
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Yuksak Academy Bot is running!"
+
+def run():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = threading.Thread(target=run)
+    t.start()
 
 # Настройка кодировки
 if sys.platform == "win32":
@@ -378,4 +394,6 @@ def main():
                     threading.Thread(target=handle_update, args=(upd,)).start()
         except: time.sleep(0.5)
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    keep_alive()
+    main()

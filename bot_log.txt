@@ -1,0 +1,3 @@
+YUKSAK ACADEMY (v5.5 - Master Edition) запущен.
+DEBUG: User 5543183063 | Step: main | Text: /admin
+DEBUG: API sendMessage took 1.57s

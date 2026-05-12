@@ -1,0 +1,8 @@
+.env
+*.db
+*.json
+*.bak
+*.log
+__pycache__/
+*.pyc
+.vscode/

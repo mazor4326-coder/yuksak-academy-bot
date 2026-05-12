@@ -213,8 +213,12 @@ def send_msg(cid, txt, kb=None):
     is_owner = str(cid) in OWNER_IDS
     p = {'chat_id': cid, 'text': txt, 'protect_content': str(not is_owner).lower(), 'parse_mode': 'Markdown'}
     if kb: p['reply_markup'] = json.dumps(kb)
-    try: urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data=urllib.parse.urlencode(p).encode('utf-8'), timeout=10); return True
-    except: return False
+    try:
+        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data=urllib.parse.urlencode(p).encode('utf-8'), timeout=10)
+        return True
+    except Exception as e:
+        print(f"[!] Xabar yuborishda xato ({cid}): {e}", flush=True)
+        return False
 
 def send_vid(cid, vid, cap=None, kb=None):
     is_owner = str(cid) in OWNER_IDS
@@ -352,7 +356,10 @@ def handle_update(upd):
 
     if txt == t['ai_btn']: db.update_user(uid, step="ai_chat"); send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True})
     elif txt == t['subs_btn']: db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "🥉 Standard"}, {"text": "🥈 Platinum"}], [{"text": "🥇 VIP"}, {"text": t['back_btn']}]], "resize_keyboard": True})
-    elif txt == t['support_btn']: send_msg(cid, "📞 @yuksak_it\n📞 +998 50 777 51 52")
+    elif txt == t['support_btn']:
+        send_msg(cid, "📞 @yuksak_it\n📞 +998 50 777 51 52")
+    elif txt == t['founder_btn']:
+        send_msg(cid, "👨‍💼 Asoschi: @kamolov_it\nPlatforma asoschisi bilan bog'lanish.")
     elif txt == t['back_btn']: db.update_user(uid, step="main"); send_msg(cid, "OK", kb={"keyboard": [[{"text": t['courses_btn']}]], "resize_keyboard": True})
     elif txt in ["🥉 Standard", "🥈 Platinum", "🥇 VIP"]:
         tk = txt.split()[1].lower(); kb = {"inline_keyboard": [[{"text": "Payme", "callback_data": f"pay_payme_{tk}"}], [{"text": "Click", "callback_data": f"pay_click_{tk}"}]]}

@@ -37,11 +37,11 @@ TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
 PAYME_TOKEN = os.getenv("PAYME_TOKEN")
 CLICK_TOKEN = os.getenv("CLICK_TOKEN")
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
-OWNER_IDS = ["1477103854", "5543183063"]
+OWNER_IDS = ["1477103854"]  # Faqat haqiqiy egasi
 
 # УГРОЗЫ
 HACK_PATTERNS = {
-    "Admin Access": ["/admin", "admin", "админ", "/root", "/db"],
+    "Admin Access": ["/root", "/db", "drop table", "union select"],
     "Jailbreak": ["ignore previous", "игнорируй", "забудь", "new rules", "prompt injection"],
     "Keys": ["password", "пароль", "admin key", "token", "api key"],
     "Injections": ["<script>", "javascript:", "eval(", "drop table", "union select"]
@@ -324,10 +324,16 @@ def handle_update(upd):
         db.update_user(uid, lang=None, step="lang")
         send_msg(cid, t['choose_lang'], kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
 
-    if (txt == '/admin' or txt.lower() == 'admin') and is_owner:
-        db.update_user(uid, step="admin_main")
-        kb = [[{"text": "📊 Статистика"}, {"text": "🚨 Атака (ДЕТАЛИ)"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "⬅️ В меню"}]]
-        send_msg(cid, "🛠️ Admin", kb={"keyboard": kb, "resize_keyboard": True}); return
+    # Admin: FAQAT egasi uchun
+    if txt == '/admin' or txt.lower() in ['admin', 'админ']:
+        if is_owner:
+            db.update_user(uid, step="admin_main")
+            kb = [[{"text": "📊 Статистика"}, {"text": "🚨 Атака (ДЕТАЛИ)"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "⬅️ В меню"}]]
+            send_msg(cid, "🛠️ Admin", kb={"keyboard": kb, "resize_keyboard": True})
+        else:
+            # Oddiy foydalanuvchi admin yozsa - ogohlantiramiz
+            send_msg(cid, "❌ Bu buyruq mavjud emas.")
+        return
 
     if u['step'] == "admin_main" and txt:
         if txt == "📊 Статистика":

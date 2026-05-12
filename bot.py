@@ -144,7 +144,7 @@ TEXTS = {
         'thanks': "Спасибо, {name}! Вы успешно зарегистрированы.",
         'agreement': "⚠️ Правила академии:\n1. Не пересылать видео.\n2. В AI запрещен мат и оффтоп.\n3. Попытки взлома — БАН.\n\nВы согласны?",
         'agree_btn': "✅ Согласен(а)",
-        'courses_btn': "📚 Мои Курсы", 'subs_btn': "💎 Тарифы", 'ai_btn': "🤖 ИИ Помощник", 'support_btn': "📞 Поддержка", 'founder_btn': "👨‍💼 Основатель", 'back_btn': "⬅️ Назад",
+        'courses_btn': "📚 Мои Курсы", 'subs_btn': "💎 Тарифы", 'ai_btn': "🤖 ИИ Помощник", 'support_btn': "📞 Тех. поддержка", 'founder_btn': "👨‍💼 Основатель", 'back_btn': "⬅️ Назад",
         'access_granted': "Отлично! Вам доступны разделы платформы.",
         'subs_info': "💎 Тарифы (на 1 месяц):\n\n🥉 Standard — 60,000 сум\n(Доступ к 1 курсу, 200 AI вопросов)\n\n🥈 Platinum — 120,000 сум\n(Доступ к 2 курсам, 400 AI вопросов)\n\n🥇 VIP — 2,000,000 сум\n(ВСЕ курсы + 5,000 AI вопросов)\n\n⚠️ ВНИМАНИЕ: Бан за мат или оффтоп!",
         'sub_activated': "✅ Тариф {tariff} активирован!",
@@ -165,7 +165,7 @@ TEXTS = {
         'thanks': "Rahmat, {name}! Ro'yxatdan o'tdingiz.",
         'agreement': "⚠️ Akademiya qoidalari:\n1. Videolarni tarqatmang.\n2. AI da so'kinmang.\n3. Xakerlik urinishi — BAN.\n\nRozimisiz?",
         'agree_btn': "✅ Roziman",
-        'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga",
+        'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Tex. yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga",
         'access_granted': "Platformadan foydalanishingiz mumkin.",
         'subs_info': "💎 Tariflar (1 oy):\n\n🥉 Standard — 60,000 so'm\n(1 ta kurs, 200 AI savol)\n\n🥈 Platinum — 120,000 so'm\n(2 ta kurs, 400 AI savol)\n\n🥇 VIP — 2,000,000 so'm\n(HAMMA kurslar + 5,000 AI savol)\n\n⚠️ DIQQAT: AI ga so'kinsangiz — blok!",
         'sub_activated': "✅ {tariff} tarifi faollashtirildi!",
@@ -356,7 +356,7 @@ def handle_update(upd):
 
     if txt == t['ai_btn']: db.update_user(uid, step="ai_chat"); send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True})
     elif txt == t['subs_btn']: db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "🥉 Standard"}, {"text": "🥈 Platinum"}], [{"text": "🥇 VIP"}, {"text": t['back_btn']}]], "resize_keyboard": True})
-    elif txt == t['support_btn']:
+    elif txt == t['support_btn'] or "поддержка" in txt.lower() or "yordam" in txt.lower():
         send_msg(cid, "📞 @yuksak_it\n📞 +998 50 777 51 52")
     elif txt == t['founder_btn']:
         send_msg(cid, "👨‍💼 Asoschi: @kamolov_it\nPlatforma asoschisi bilan bog'lanish.")

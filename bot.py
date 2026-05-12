@@ -1,16 +1,19 @@
-# -*- coding: utf-8 -*-
 import sys, urllib.request, urllib.parse, json, time, os, threading, re, sqlite3
+from dotenv import load_dotenv
+
+# Load .env file if it exists (for local testing)
+load_dotenv()
 
 # Настройка кодировки
 if sys.platform == "win32":
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-# КЛЮЧИ
-TELEGRAM_BOT_TOKEN = "8688180166:AAFGxxJ6qs0eWTTaS9R5GFQR3hpIytgXBvM"
-PAYME_TOKEN = "371317599:TEST:1778155607440"
-CLICK_TOKEN = "398062629:TEST:999999999_F91D8F69C042267444B74CC0B3C747757EB0E065"
-GOOGLE_API_KEY = "AIzaSyBhOu1-NR6C8PYSqhlWml7YVZ8J0_KOt4Y"
+# КЛЮЧИ (Tokenlarni Render Environment Variables'dan oladi)
+TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
+PAYME_TOKEN = os.getenv("PAYME_TOKEN")
+CLICK_TOKEN = os.getenv("CLICK_TOKEN")
+GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 OWNER_IDS = ["1477103854", "5543183063"]
 
 # УГРОЗЫ

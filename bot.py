@@ -13,11 +13,16 @@ def home():
     return "Yuksak Academy Bot is running!"
 
 def run():
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    try:
+        port = int(os.environ.get("PORT", 8080))
+        print(f"[*] Web server {port}-portda ishga tushmoqda...", flush=True)
+        app.run(host='0.0.0.0', port=port)
+    except Exception as e:
+        print(f"[!] Web serverda xato: {e}", flush=True)
 
 def keep_alive():
-    t = threading.Thread(target=run)
+    print("[*] keep_alive() chaqirildi", flush=True)
+    t = threading.Thread(target=run, daemon=True)
     t.start()
 
 # Настройка кодировки
@@ -379,8 +384,11 @@ def handle_update(upd):
                 else: send_msg(cid, "🚀 Soon!")
 
 def main():
-    try: urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook")
-    except: pass
+    print("[*] Bot polling rejimi boshlanmoqda...", flush=True)
+    try:
+        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook")
+    except Exception as e:
+        print(f"[!] Webhookni o'chirishda xato: {e}", flush=True)
     offset = 0
     print("YUKSAK FULL SEC SQL started.", flush=True)
     while True:

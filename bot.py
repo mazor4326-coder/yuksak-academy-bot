@@ -14,16 +14,18 @@ def home():
 
 def run():
     try:
-        port = int(os.environ.get("PORT", 8080))
-        print(f"[*] Web server {port}-portda ishga tushmoqda...", flush=True)
-        app.run(host='0.0.0.0', port=port)
+        # Render odatda 10000 portni ishlatadi
+        port = int(os.environ.get("PORT", 10000))
+        print(f"[*] Render uchun Web-server {port}-portda ochilmoqda...", flush=True)
+        app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
     except Exception as e:
-        print(f"[!] Web serverda xato: {e}", flush=True)
+        print(f"[!] Web-serverni ishga tushirishda xato: {e}", flush=True)
 
 def keep_alive():
-    print("[*] keep_alive() chaqirildi", flush=True)
+    print("[*] keep_alive() ishga tushdi, thread yaratilmoqda...", flush=True)
     t = threading.Thread(target=run, daemon=True)
     t.start()
+    print("[*] Web-server thready yuborildi.", flush=True)
 
 # Настройка кодировки
 if sys.platform == "win32":

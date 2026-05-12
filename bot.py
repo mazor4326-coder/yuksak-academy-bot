@@ -420,6 +420,25 @@ def handle_update(upd):
         db.update_user(uid, lang=None, step="lang")
         send_msg(cid, t['choose_lang'], kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
 
+    # ====== GLOBAL TUGMALAR — har qanday holatda ishlaydi ======
+    if txt == t.get('support_btn') or (txt and ("тех. поддержка" in txt.lower() or "tex. yordam" in txt.lower() or "📞" in txt and ("поддержка" in txt.lower() or "yordam" in txt.lower() or "support" in txt.lower()))):
+        support_msgs = {
+            'ru': "📞 *Поддержка:*\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52\n\n⚠️ Просьба не звонить по пустякам.",
+            'uz': "📞 *Qo'llab-quvvatlash:*\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang.",
+            'en': "📞 *Support:*\n\n📱 Telegram: @yuksak_it\n📞 Phone: +998 50 777 51 52\n\n⚠️ Please do not call for trivial matters."
+        }
+        send_msg(cid, support_msgs.get(lang, support_msgs['ru']), kb=get_main_kb(lang))
+        return
+    if txt == t.get('founder_btn') or (txt and ("основател" in txt.lower() or "asoschi" in txt.lower() or "founder" in txt.lower())):
+        bio = FOUNDER_BIO.get(lang, FOUNDER_BIO['ru'])
+        founder_photo = db.get_setting('founder_photo')
+        if founder_photo:
+            send_photo(cid, founder_photo, caption=bio, kb=get_main_kb(lang))
+        else:
+            send_msg(cid, bio, kb=get_main_kb(lang))
+        return
+    # ===========================================================
+
     # Admin: FAQAT egasi uchun
     if txt == '/admin' or txt.lower() in ['admin', 'админ']:
         if is_owner:

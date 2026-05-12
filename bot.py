@@ -421,7 +421,10 @@ def handle_update(upd):
         send_msg(cid, t['choose_lang'], kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
 
     # ====== GLOBAL TUGMALAR — har qanday holatda ishlaydi ======
-    if txt == t.get('support_btn') or (txt and ("тех. поддержка" in txt.lower() or "tex. yordam" in txt.lower() or "📞" in txt and ("поддержка" in txt.lower() or "yordam" in txt.lower() or "support" in txt.lower()))):
+    _support_btns = ["📞 Тех. поддержка", "📞 Tex. yordam", "📞 Support"]
+    _founder_btns = ["👨‍💼 Основатель", "👨‍💼 Asoschi", "👨‍💼 Founder"]
+
+    if txt in _support_btns:
         support_msgs = {
             'ru': "📞 *Поддержка:*\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52\n\n⚠️ Просьба не звонить по пустякам.",
             'uz': "📞 *Qo'llab-quvvatlash:*\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang.",
@@ -429,7 +432,8 @@ def handle_update(upd):
         }
         send_msg(cid, support_msgs.get(lang, support_msgs['ru']), kb=get_main_kb(lang))
         return
-    if txt == t.get('founder_btn') or (txt and ("основател" in txt.lower() or "asoschi" in txt.lower() or "founder" in txt.lower())):
+
+    if txt in _founder_btns:
         bio = FOUNDER_BIO.get(lang, FOUNDER_BIO['ru'])
         founder_photo = db.get_setting('founder_photo')
         if founder_photo:

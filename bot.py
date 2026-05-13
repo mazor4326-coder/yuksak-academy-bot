@@ -423,12 +423,17 @@ def handle_update(upd):
         u = db.get_user(uid)
     
     if not u: return # Database error
+    
+    # STATUS REPORT FOR OWNER
+    if is_owner and 'text' in m:
+        _s = u.get('step', 'None'); _l = u.get('lang', 'None')
+        send_msg(cid, f"🛡️ STATUS: Step={_s}, Lang={_l}")
 
     if u.get('banned'): 
         send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned'])
         return
     
-    # Langni tekshirish (faqat ru, uz, en bo'lishi shart)
+    # Langni tekshirish
     lang = u.get('lang')
     if lang not in ['ru', 'uz', 'en']: lang = 'ru'
     t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
@@ -714,6 +719,14 @@ def handle_update(upd):
                 else:
                     send_msg(cid, "🚀 Tez kunda!")
 
+def safe_handle(upd):
+    try:
+        handle_update(upd)
+    except Exception as e:
+        for oid in OWNER_IDS:
+            try: send_msg(oid, f"❌ *CRITICAL ERROR:* `{str(e)}`")
+            except: pass
+
 def main():
     print("[*] Bot polling rejimi boshlanmoqda...", flush=True)
     try:
@@ -730,7 +743,7 @@ def main():
                 if not data.get('result'): continue
                 for upd in data['result']:
                     offset = upd['update_id'] + 1
-                    threading.Thread(target=handle_update, args=(upd,)).start()
+                    threading.Thread(target=safe_handle, args=(upd,)).start()
         except: time.sleep(0.5)
 
 if __name__ == "__main__":

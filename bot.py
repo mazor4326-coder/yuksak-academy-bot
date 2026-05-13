@@ -410,11 +410,12 @@ def handle_update(upd):
     # ====== NUCLEAR GLOBAL BUTTONS (Har qanday holatda ishlaydi) ======
     if txt:
         _low = txt.lower()
-        _is_sup = any(x in _low for x in ["поддержка", "yordam", "support"])
-        _is_fnd = any(x in _low for x in ["основатель", "asoschi", "founder"])
-        _is_back = any(x in _low for x in ["orqaga", "назад", "back"])
+        # "yordam", "ёрдам", "поддержка", "support", "asoschi", "founder", "основатель", "назад", "back", "orqaga"
+        _is_sup = any(x in _low for x in ["поддержка", "yordam", "ёрдам", "support", "tech", "tex"])
+        _is_fnd = any(x in _low for x in ["основатель", "asoschi", "founder", "камoлов", "kamolov"])
+        _is_back = any(x in _low for x in ["orqaga", "назад", "back", "меню", "menu"])
         
-        if _is_sup and len(txt) < 35:
+        if _is_sup:
             support_msgs = {
                 'ru': "📞 *Поддержка:*\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52\n\n⚠️ Просьба не звонить по пустякам.",
                 'uz': "📞 *Qo'llab-quvvatlash:*\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang.",
@@ -423,17 +424,18 @@ def handle_update(upd):
             send_msg(cid, support_msgs.get(lang, support_msgs['ru']), kb=get_main_kb(lang))
             return
             
-        if _is_fnd and len(txt) < 35:
+        if _is_fnd:
             bio = FOUNDER_BIO.get(lang, FOUNDER_BIO['ru'])
             founder_photo = db.get_setting('founder_photo')
             if founder_photo: send_photo(cid, founder_photo, caption=bio, kb=get_main_kb(lang))
             else: send_msg(cid, bio, kb=get_main_kb(lang))
             return
 
-        if _is_back and len(txt) < 25:
+        if _is_back:
             db.update_user(uid, step="main")
             send_msg(cid, "🏠", kb=get_main_kb(lang))
             return
+    # =================================================================
     # =================================================================
     # ============================================================================
 

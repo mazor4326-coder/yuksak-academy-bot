@@ -152,7 +152,7 @@ class Database:
     def add_hacker_log(self, uid, n, un, p, txt, reas):
         ts = time.strftime('%Y-%m-%d %H:%M:%S')
         with self.lock:
-            c = self.get_conn(); c.execute("INSERT INTO hacker_logs (user_id, name, username, phone, bad_text, reason, timestamp) VALUES (?,?,?,?,?,?,?)", (uid, n, un, p, txt, reas)); c.commit(); c.close()
+            c = self.get_conn(); c.execute("INSERT INTO hacker_logs (user_id, name, username, phone, bad_text, reason, timestamp) VALUES (?,?,?,?,?,?,?)", (uid, n, un, p, txt, reas, ts)); c.commit(); c.close()
 
     def get_hacker_logs(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM hacker_logs ORDER BY id DESC LIMIT 50").fetchall(); c.close(); return [dict(r) for r in rows]

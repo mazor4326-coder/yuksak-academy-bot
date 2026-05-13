@@ -416,6 +416,18 @@ def answer_pre_checkout(pqid, ok=True, err=None):
     except: pass
 
 def handle_update(upd):
+    uid = None
+    if 'callback_query' in upd: uid = str(upd['callback_query']['from']['id'])
+    elif 'message' in upd: uid = str(upd['message']['from']['id'])
+    elif 'pre_checkout_query' in upd: uid = str(upd['pre_checkout_query']['from']['id'])
+
+    if uid:
+        u = db.get_user(uid)
+        if u and u.get('banned'):
+            cid = upd.get('callback_query', {}).get('message', {}).get('chat', {}).get('id') or upd.get('message', {}).get('chat', {}).get('id')
+            if cid: send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned'])
+            return
+
     if 'callback_query' in upd:
         cq = upd['callback_query']; cid = cq['message']['chat']['id']; uid = str(cq['from']['id']); data = cq['data']
         u = db.get_user(uid)
@@ -451,10 +463,6 @@ def handle_update(upd):
     
     if not u: return # Database error
 
-    if u.get('banned'): 
-        send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned'])
-        return
-    
     lang = u.get('lang')
     if lang not in ['ru', 'uz', 'en']: lang = 'ru'
     t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()

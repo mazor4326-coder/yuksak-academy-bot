@@ -686,6 +686,7 @@ def handle_update(upd):
             if not is_owner and u['sub'] == 'none':
                 send_msg(cid, "❌ Bo'limga kirish uchun tarif sotib oling!")
             else:
+                unl = u.get('unlocked', [])
                 c_id = get_course_id(txt)
                 if txt not in unl: unl.append(txt); db.update_user(uid, unlocked=unl)
                 data = db.get_courses().get(c_id)

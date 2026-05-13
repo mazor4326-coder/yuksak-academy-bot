@@ -394,6 +394,15 @@ def handle_update(upd):
     if u.get('banned'): send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned']); return
     lang = u.get('lang', 'ru'); t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
 
+    # 0. Kontakt yuborilganda (Har doim ishlaydi)
+    if 'contact' in m:
+        c = m['contact']
+        db.update_user(uid, phone=c['phone_number'], name=c.get('first_name','User'), step="agreement")
+        msg_thanks = t['thanks'].format(name=c.get('first_name','User'))
+        send_msg(cid, msg_thanks)
+        send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True})
+        return
+
     # ====== NUCLEAR GLOBAL BUTTONS (Har qanday holatda ishlaydi) ======
     if txt:
         _low = txt.lower()
@@ -578,17 +587,17 @@ def handle_update(upd):
         return
 
     if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
-        l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en'); db.update_user(uid, lang=l, step="contact" if not u.get('phone') else "main")
+        l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
+        db.update_user(uid, lang=l, step="contact" if not u.get('phone') else "main")
         t_new = TEXTS[l]
-        if not u.get('phone'): send_msg(cid, t_new['welcome']); send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True})
-        else: send_msg(cid, t_new['access_granted'], kb=get_main_kb(l))
+        if not u.get('phone') or u.get('phone') == 'None':
+            send_msg(cid, t_new['welcome'])
+            send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True})
+        else:
+            send_msg(cid, t_new['access_granted'], kb=get_main_kb(l))
         return
 
-    if u['step'] == "contact" and 'contact' in m:
-        c = m['contact']; db.update_user(uid, phone=c['phone_number'], name=c.get('first_name','User'), step="agreement")
-        send_msg(cid, t['thanks'].format(name=c.get('first_name'), phone=c['phone_number'])); send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True}); return
-
-    if u['step'] == "agreement" and txt == t['agree_btn']:
+    if u['step'] == "agreement" and txt and (txt == t.get('agree_btn') or "согласен" in txt.lower() or "roziman" in txt.lower()):
         db.update_user(uid, step="main", agreed=1)
         send_msg(cid, t['access_granted'], kb=get_main_kb(lang))
         return

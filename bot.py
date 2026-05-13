@@ -390,8 +390,10 @@ def handle_update(upd):
 
     # ====== GLOBAL TUGMALAR (Support & Founder) - Eng tepada bo'lishi shart! ======
     if txt:
-        _is_sup = any(x in txt.lower() for x in ["тех. поддержка", "tex. yordam", "support"]) or txt in [TEXTS['ru']['support_btn'], TEXTS['uz']['support_btn'], TEXTS['en']['support_btn']]
-        _is_fnd = any(x in txt.lower() for x in ["основатель", "asoschi", "founder"]) or txt in [TEXTS['ru']['founder_btn'], TEXTS['uz']['founder_btn'], TEXTS['en']['founder_btn']]
+        # Emojilar va belgilarsiz tekshirish (resilient matching)
+        _norm = re.sub(r'[^\w\s]', '', txt.lower()).strip()
+        _is_sup = any(x in _norm for x in ["поддержка", "yordam", "support"])
+        _is_fnd = any(x in _norm for x in ["основатель", "asoschi", "founder"])
         
         if _is_sup:
             support_msgs = {

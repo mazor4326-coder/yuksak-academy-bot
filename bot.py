@@ -244,6 +244,17 @@ TEXTS = {
     }
 }
 
+# Kurs nomini ID ga aylantirish (tillararo bir xil bo'lishi uchun)
+def get_course_id(name):
+    if not name: return name
+    for l in TEXTS:
+        if 'courses' not in TEXTS[l]: continue
+        for cat in TEXTS[l]['courses']:
+            for i, cname in enumerate(TEXTS[l]['courses'][cat]):
+                if cname == name:
+                    return f"{cat}_{i}" # Masalan: 'prog_0'
+    return name
+
 def detect_attack(t):
     if not t: return None
     t_l = t.lower().strip()
@@ -396,11 +407,7 @@ def handle_update(upd):
     u = db.get_user(uid)
     if not u: db.create_user(uid, m['from'].get('first_name','User'), m['from'].get('username','None')); u = db.get_user(uid)
     if u.get('banned'): send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned']); return
-    
-    # Langni tekshirish (faqat ru, uz, en bo'lishi shart)
-    lang = u.get('lang')
-    if lang not in ['ru', 'uz', 'en']: lang = 'ru'
-    t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
+    lang = u.get('lang', 'ru'); t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
 
     # 0. Kontakt yuborilganda (Har doim ishlaydi)
     if 'contact' in m:
@@ -475,9 +482,10 @@ def handle_update(upd):
             return
         elif u['step'].startswith("admin_video_course_") and txt:
             if txt == t['back_btn']: db.update_user(uid, step="admin_video_cat"); return
-            c = db.get_courses(); data = c.get(txt, [])
-            data.append({"video": u.get('temp_video_id'), "caption": f"{txt} - part {len(data)+1}"})
-            db.update_course(txt, data); db.update_user(uid, step="main"); send_msg(cid, "✅ Saved!", kb={"keyboard": [[{"text": t['courses_btn']}]], "resize_keyboard": True}); return
+            c_id = get_course_id(txt)
+            c = db.get_courses(); data = c.get(c_id, [])
+            data.append({"video": u.get('temp_video_id'), "caption": f"{txt} - qism {len(data)+1}"})
+            db.update_course(c_id, data); db.update_user(uid, step="main"); send_msg(cid, "✅ Saqlandi!", kb={"keyboard": [[{"text": t['courses_btn']}]], "resize_keyboard": True}); return
 
     if txt == '/start':
         db.update_user(uid, lang=None, step="lang")
@@ -596,9 +604,8 @@ def handle_update(upd):
             send_msg(cid, f"✅ Xabar {count} ta foydalanuvchiga yuborildi!")
         return
 
-    # Til tanlash (Broad matching)
-    if txt and ("zbek" in txt or "усс" in txt or "ngl" in txt or "English" in txt):
-        l = 'uz' if "zbek" in txt else ('ru' if "усс" in txt else 'en')
+    if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
+        l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
         db.update_user(uid, lang=l, step="contact" if not u.get('phone') else "main")
         t_new = TEXTS[l]
         if not u.get('phone') or u.get('phone') == 'None':
@@ -664,15 +671,18 @@ def handle_update(upd):
     elif u['step'].startswith("c_") and txt:
         cat = u['step'].split("_")[1]
         if txt in t['courses'].get(cat, []):
-            if u['sub'] == 'none': send_msg(cid, "❌ Choose plan!")
+            if not is_owner and u['sub'] == 'none':
+                send_msg(cid, "❌ Bo'limga kirish uchun tarif sotib oling!")
             else:
-                unl = u['unlocked']
+                c_id = get_course_id(txt)
                 if txt not in unl: unl.append(txt); db.update_user(uid, unlocked=unl)
-                data = db.get_courses().get(txt)
+                data = db.get_courses().get(c_id)
                 if data:
                     send_msg(cid, t['course_info'].format(course=txt))
-                    for i in data: send_vid(cid, i['video'], i.get('caption'))
-                else: send_msg(cid, "🚀 Soon!")
+                    for i in data:
+                        send_vid(cid, i['video'], i.get('caption'))
+                else:
+                    send_msg(cid, "🚀 Tez kunda!")
 
 def main():
     print("[*] Bot polling rejimi boshlanmoqda...", flush=True)

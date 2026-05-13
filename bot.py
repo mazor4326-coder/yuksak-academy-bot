@@ -282,9 +282,15 @@ def send_msg(cid, txt, kb=None):
     try:
         urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data=urllib.parse.urlencode(p).encode('utf-8'), timeout=10)
         return True
-    except Exception as e:
-        print(f"[!] Xabar yuborishda xato ({cid}): {e}", flush=True)
-        return False
+    except:
+        try:
+            # Markdown xatosi bo'lsa, oddiy matn sifatida yuborish
+            p.pop('parse_mode', None)
+            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data=urllib.parse.urlencode(p).encode('utf-8'), timeout=10)
+            return True
+        except Exception as e:
+            print(f"[!] Xabar yuborishda xato ({cid}): {e}", flush=True)
+            return False
 
 def send_photo(cid, photo_id, caption=None, kb=None):
     p = {'chat_id': cid, 'photo': photo_id, 'parse_mode': 'Markdown'}
@@ -402,19 +408,6 @@ def handle_update(upd):
         send_msg(uid, TEXTS.get(u.get('lang', 'ru'), TEXTS['ru'])['sub_activated'].format(tariff=tariff))
         return
 
-    if 'message' in upd and 'text' in upd['message'] and upd['message']['text'] == '/ping':
-        send_msg(upd['message']['chat']['id'], "🏓 PONG! Bot is alive.")
-        return
-
-    # ====== GOD-MODE SUPPORT FAILSAFE (Absolute Top) ======
-    if 'message' in upd and 'text' in upd['message']:
-        _raw = upd['message']['text'].lower()
-        if any(x in _raw for x in ['yordam', 'support', 'поддерж', 'ёрдам', 'tex', 'тех']):
-            cid = upd['message']['chat']['id']
-            sup_text = "📞 Поддержка / Tex. yordam:\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52\n\n⚠️ Просьба не звонить по пустякам."
-            send_msg(cid, sup_text)
-            return
-
     if 'message' not in upd: return
     m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS)
     u = db.get_user(uid)
@@ -423,17 +416,11 @@ def handle_update(upd):
         u = db.get_user(uid)
     
     if not u: return # Database error
-    
-    # STATUS REPORT FOR OWNER
-    if is_owner and 'text' in m:
-        _s = u.get('step', 'None'); _l = u.get('lang', 'None')
-        send_msg(cid, f"🛡️ STATUS: Step={_s}, Lang={_l}")
 
     if u.get('banned'): 
         send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned'])
         return
     
-    # Langni tekshirish
     lang = u.get('lang')
     if lang not in ['ru', 'uz', 'en']: lang = 'ru'
     t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()

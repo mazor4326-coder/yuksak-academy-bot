@@ -402,6 +402,17 @@ def handle_update(upd):
         send_msg(uid, TEXTS.get(u.get('lang', 'ru'), TEXTS['ru'])['sub_activated'].format(tariff=tariff))
         return
 
+    # ====== GOD-MODE SUPPORT FAILSAFE (Absolute Top) ======
+    if 'message' in upd and 'text' in upd['message']:
+        _raw = upd['message']['text'].lower()
+        if any(x in _raw for x in ['yordam', 'support', 'поддерж', 'ёрдам', 'tex. yordam', 'tex yordam']):
+            cid = upd['message']['chat']['id']
+            # Har doim ishlaydigan, hech narsaga bog'lanmagan xabar
+            sup_text = "📞 Поддержка / Tex. yordam:\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52\n\n⚠️ Просьба не звонить по пустякам."
+            send_msg(cid, sup_text)
+            return
+    # ======================================================
+
     if 'message' not in upd: return
     m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS)
     u = db.get_user(uid)

@@ -184,7 +184,7 @@ TEXTS = {
         'welcome': "Assalomu alaykum! Добро пожаловать на платформу YUKSAK ACADEMY.",
         'req_contact': "Для регистрации поделитесь вашим номером телефона.",
         'contact_btn': "📱 Поделиться контактом",
-        'thanks': "Спасибо, {name}! Вы успешно зарегистрированы.",
+        'thanks': "Ваш номер успешно зарегистрирован в нашей базе. Пожалуйста, ознакомьтесь с правилами академии и нажмите 'Согласен'.",
         'agreement': "⚠️ *ПРАВИЛА И УСЛОВИЯ YUKSAK ACADEMY:*\n\n1. **Конфиденциальность:** Запрещено копировать, скачивать или пересылать видео-уроки третьим лицам. Все материалы защищены авторским правом.\n2. **ИИ Помощник:** В общении с ИИ строго запрещен мат, оскорбления и оффтоп. ИИ предназначен только для обучения.\n3. **Безопасность:** Любые попытки взлома, поиска уязвимостей или использования админ-команд приведут к немедленной блокировке (БАН) без возврата средств.\n4. **Уважение:** Мы ценим каждого студента и ожидаем взаимного уважения.\n5. **Аккаунты:** Один аккаунт предназначен для одного человека. Использование одного аккаунта несколькими лицами запрещено.\n6. **Возврат:** После получения доступа к цифровым материалам возврат средств не производится.\n7. **Обновления:** Академия оставляет за собой право обновлять материалы и правила.\n\nВы подтверждаете, что прочитали и согласны с правилами?",
         'agree_btn': "✅ Согласен(а) и принимаю условия",
         'courses_btn': "📚 Мои Курсы", 'subs_btn': "💎 Тарифы", 'ai_btn': "🤖 ИИ Помощник", 'support_btn': "📞 Тех. поддержка", 'founder_btn': "👨‍💼 Основатель", 'back_btn': "⬅️ Назад",
@@ -205,7 +205,7 @@ TEXTS = {
         'welcome': "Assalomu alaykum! YUKSAK ACADEMY platformasiga xush kelibsiz.",
         'req_contact': "Ro'yxatdan o'tish uchun telefon raqamingizni yuboring.",
         'contact_btn': "📱 Kontaktni yuborish",
-        'thanks': "Rahmat, {name}! Ro'yxatdan o'tdingiz.",
+        'thanks': "Raqamingiz bizning bazada muvaffaqiyatli ro'yxatga olindi. Iltimos, akademiya qoidalari bilan tanishib chiqing va 'Roziman' tugmasini bosing.",
         'agreement': "⚠️ *YUKSAK ACADEMY QOIDALARI:*\n\n1. **Maxfiylik:** Videolarni ko'chirish yoki tarqatish taqiqlanadi. Barcha huquqlar himoyalangan.\n2. **AI Yordamchi:** So'kinish va o'rinsiz gaplar taqiqlanadi. Faqat ta'lim uchun.\n3. **Xavfsizlik:** Tizimni buzishga urinish bloklanishga sabab bo'ladi.\n4. **Hurmat:** O'zaro hurmat majburiy.\n5. **Hisoblar:** Bir kishi uchun bitta profil.\n6. **To'lov:** Kursga kirish ruxsati berilgach, pul qaytarilmaydi.\n7. **Yangilanish:** Akademiya qoidalarni o'zgartirish huquqiga ega.\n\nQoidalarni qabul qilasizmi?",
         'agree_btn': "✅ Roziman",
         'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Tex. yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga",
@@ -226,7 +226,7 @@ TEXTS = {
         'welcome': "Welcome to YUKSAK ACADEMY platform!",
         'req_contact': "Please share your phone number to register.",
         'contact_btn': "📱 Share Contact",
-        'thanks': "Thank you, {name}! You are registered.",
+        'thanks': "Your number has been successfully registered in our database. Please read the rules and click 'I Agree'.",
         'agreement': "⚠️ Rules:\n1. No video sharing.\n2. No swearing in AI.\n3. Hack attempts = BAN.\n\nDo you agree?",
         'agree_btn': "✅ I Agree",
         'courses_btn': "📚 My Courses", 'subs_btn': "💎 Plans", 'ai_btn': "🤖 AI Assistant", 'support_btn': "📞 Support", 'founder_btn': "👨‍💼 Founder", 'back_btn': "⬅️ Back",
@@ -402,13 +402,6 @@ def handle_update(upd):
         send_msg(uid, TEXTS.get(u.get('lang', 'ru'), TEXTS['ru'])['sub_activated'].format(tariff=tariff))
         return
 
-    # ====== OWNER BROADCAST LOG ======
-    for oid in OWNER_IDS:
-        try:
-            send_msg(oid, f"🔔 UPDATE RECV: `{json.dumps(upd)}`")
-        except:
-            pass
-
     if 'message' in upd and 'text' in upd['message'] and upd['message']['text'] == '/ping':
         send_msg(upd['message']['chat']['id'], "🏓 PONG! Bot is alive.")
         return
@@ -421,7 +414,7 @@ def handle_update(upd):
             sup_text = "📞 Поддержка / Tex. yordam:\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52\n\n⚠️ Просьба не звонить по пустякам."
             send_msg(cid, sup_text)
             return
-    
+
     if 'message' not in upd: return
     m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS)
     u = db.get_user(uid)
@@ -435,6 +428,7 @@ def handle_update(upd):
         send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned'])
         return
     
+    # Langni tekshirish (faqat ru, uz, en bo'lishi shart)
     lang = u.get('lang')
     if lang not in ['ru', 'uz', 'en']: lang = 'ru'
     t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
@@ -443,9 +437,11 @@ def handle_update(upd):
     if 'contact' in m:
         c = m['contact']
         db.update_user(uid, phone=c['phone_number'], name=c.get('first_name','User'), step="agreement")
-        msg_thanks = t['thanks'].format(name=c.get('first_name','User'))
+        # Yangilangan tilni olish
+        u_now = db.get_user(uid); l_now = u_now.get('lang', 'ru'); t_now = TEXTS.get(l_now, TEXTS['ru'])
+        msg_thanks = t_now['thanks'].format(name=c.get('first_name','User'))
         send_msg(cid, msg_thanks)
-        send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True})
+        send_msg(cid, t_now['agreement'], kb={"keyboard": [[{"text": t_now['agree_btn']}]], "resize_keyboard": True})
         return
 
     # ====== ULTRA-ROBUST GLOBAL BUTTONS (Har qanday holatda ishlaydi) ======
@@ -520,7 +516,9 @@ def handle_update(upd):
 
     if txt == '/start':
         db.update_user(uid, lang=None, step="lang")
-        send_msg(cid, t['choose_lang'], kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
+        # Har doim t['choose_lang'] emas, balki TEXTS['ru'] dan foydalanamiz chunki lang hozircha None
+        send_msg(cid, TEXTS['ru']['choose_lang'], kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True})
+        return
 
     # Admin: FAQAT egasi uchun
     if txt == '/admin' or txt.lower() in ['admin', 'админ']:
@@ -639,7 +637,7 @@ def handle_update(upd):
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
         db.update_user(uid, lang=l, step="contact" if not u.get('phone') else "main")
         t_new = TEXTS[l]
-        if not u.get('phone') or u.get('phone') == 'None':
+        if not u.get('phone') or u.get('phone') == 'None' or u.get('phone') == '':
             send_msg(cid, t_new['welcome'])
             send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True})
         else:

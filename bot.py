@@ -404,8 +404,10 @@ def handle_update(upd):
 
     # ====== OWNER BROADCAST LOG ======
     for oid in OWNER_IDS:
-        try: send_msg(oid, f"🔔 UPDATE RECV: `{json.dumps(upd)}`")
-        except: pass
+        try:
+            send_msg(oid, f"🔔 UPDATE RECV: `{json.dumps(upd)}`")
+        except:
+            pass
 
     if 'message' in upd and 'text' in upd['message'] and upd['message']['text'] == '/ping':
         send_msg(upd['message']['chat']['id'], "🏓 PONG! Bot is alive.")
@@ -416,7 +418,7 @@ def handle_update(upd):
         _raw = upd['message']['text'].lower()
         if any(x in _raw for x in ['yordam', 'support', 'поддерж', 'ёрдам', 'tex', 'тех']):
             cid = upd['message']['chat']['id']
-            sup_text = "📞 Поддержка / Tex. yordam:\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52"
+            sup_text = "📞 Поддержка / Tex. yordam:\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52\n\n⚠️ Просьба не звонить по пустякам."
             send_msg(cid, sup_text)
             return
     

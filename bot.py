@@ -668,14 +668,20 @@ def handle_update(upd):
             kb = [[{"text": "📊 Статистика"}, {"text": "АТАКА"}], [{"text": "АТАКА ДЕТАЛЬНАЯ"}, {"text": "📈 Аналитика"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}], [{"text": "📢 Объявление"}, {"text": "🔎 Поиск пользователя"}], [{"text": "🔓 Разблокировать"}, {"text": "⬅️ В меню"}]]
             send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
         else:
-            target_id = txt.strip()
-            target_user = db.get_user(target_id)
-            if target_user:
+            q = txt.strip().lower().replace("@", "").replace("+", "")
+            all_u = db.get_all_users()
+            found = None
+            for user_id, user in all_u.items():
+                if q == user_id or q == (user.get('phone') or '').replace('+', '') or q == (user.get('username') or '').lower():
+                    found = user; break
+            
+            if found:
+                target_id = found['id']
                 db.update_user(target_id, banned=0)
-                send_msg(cid, f"✅ Foydalanuvchi (ID: {target_id}) blokdan chiqarildi!")
+                send_msg(cid, f"✅ Foydalanuvchi {found.get('name')} (ID: {target_id}) blokdan chiqarildi!")
                 send_msg(target_id, "🔔 Sizning hisobingiz admin tomonidan blokdan chiqarildi. Endi botdan foydalanishingiz mumkin.")
             else:
-                send_msg(cid, "❌ Bunday ID bilan foydalanuvchi topilmadi.")
+                send_msg(cid, "❌ Bunday ID, telefon yoki username bilan foydalanuvchi topilmadi.")
         return
 
     if u['step'] == "admin_search" and is_owner and txt:

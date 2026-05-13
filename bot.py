@@ -396,7 +396,11 @@ def handle_update(upd):
     u = db.get_user(uid)
     if not u: db.create_user(uid, m['from'].get('first_name','User'), m['from'].get('username','None')); u = db.get_user(uid)
     if u.get('banned'): send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned']); return
-    lang = u.get('lang', 'ru'); t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
+    
+    # Langni tekshirish (faqat ru, uz, en bo'lishi shart)
+    lang = u.get('lang')
+    if lang not in ['ru', 'uz', 'en']: lang = 'ru'
+    t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
 
     # 0. Kontakt yuborilganda (Har doim ishlaydi)
     if 'contact' in m:
@@ -592,8 +596,9 @@ def handle_update(upd):
             send_msg(cid, f"✅ Xabar {count} ta foydalanuvchiga yuborildi!")
         return
 
-    if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
-        l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
+    # Til tanlash (Broad matching)
+    if txt and ("zbek" in txt or "усс" in txt or "ngl" in txt or "English" in txt):
+        l = 'uz' if "zbek" in txt else ('ru' if "усс" in txt else 'en')
         db.update_user(uid, lang=l, step="contact" if not u.get('phone') else "main")
         t_new = TEXTS[l]
         if not u.get('phone') or u.get('phone') == 'None':

@@ -420,8 +420,11 @@ def handle_update(upd):
 
     # ====== ULTRA-ROBUST GLOBAL BUTTONS (Har qanday holatda ishlaydi) ======
     if txt:
+        # OWNER DEBUG: Nima matn kelayotganini ko'rish uchun
+        if is_owner and '/admin' not in txt: send_msg(cid, f"🔍 DEBUG: Kelgan matn: [{txt}]")
+
         # Regex orqali aniqlash (katta-kichik harf, kirill/latin farqi yo'q)
-        is_sup = re.search(r'yordam|ёрдам|поддерж|support', txt, re.I)
+        is_sup = re.search(r'yordam|ёрдам|поддерж|support|tech|tex|тех', txt, re.I)
         is_fnd = re.search(r'asoschi|основател|founder|kamolov|камолов', txt, re.I)
         is_back = re.search(r'orqaga|назад|back|меню|menu', txt, re.I)
 

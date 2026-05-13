@@ -65,8 +65,12 @@ BAD_WORDS = [
 def detect_profanity(text):
     if not text: return False
     t = text.lower()
+    # Word boundaries ishlatamiz (\b) - faqat to'liq so'zlarni tutish uchun
+    # Texnik kabi so'zlar ichidagi "sik" ni tutib olmasligi uchun
     for w in BAD_WORDS:
-        if w in t: return True
+        # Har bir so'm uchun regex orqali chegaralangan qidiruv
+        if re.search(rf'\b{re.escape(w)}\b', t):
+            return True
     return False
 
 def detect_attack(text):

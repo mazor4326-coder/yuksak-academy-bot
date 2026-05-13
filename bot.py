@@ -69,6 +69,14 @@ def detect_profanity(text):
         if w in t: return True
     return False
 
+def detect_attack(text):
+    if not text: return None
+    t = text.lower()
+    for reason, patterns in HACK_PATTERNS.items():
+        for p in patterns:
+            if p in t: return reason
+    return None
+
 DB_NAME = "yuksak.db"
 
 class Database:

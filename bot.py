@@ -581,7 +581,7 @@ def handle_update(upd):
                   [{"text": "💰 Финансы"}, {"text": "👥 Участники"}],
                   [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}],
                   [{"text": "📢 Объявление"}, {"text": "🔎 Поиск пользователя"}],
-                  [{"text": "⬅️ В меню"}]]
+                  [{"text": "🔓 Разблокировать"}, {"text": "⬅️ В меню"}]]
             send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
         else:
             send_msg(cid, "❌ Bu buyruq mavjud emas.")
@@ -654,9 +654,28 @@ def handle_update(upd):
         elif txt == "📢 Объявление":
             db.update_user(uid, step="admin_broadcast")
             send_msg(cid, "📢 Barcha foydalanuvchilarga yuboriladigan xabarni yozing:\n\n(Bekor qilish uchun /admin yozing)", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
+        elif txt == "🔓 Разблокировать":
+            db.update_user(uid, step="admin_unban")
+            send_msg(cid, "🔓 *Foydalanuvchini blokdan chiqarish:*\n\nBlokdan chiqarish kerak bo'lgan foydalanuvchining ID raqamini yuboring:", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
         elif txt == "⬅️ В меню":
             db.update_user(uid, step="main")
             send_msg(cid, "OK", kb=get_main_kb(lang))
+        return
+
+    if u['step'] == "admin_unban" and is_owner and txt:
+        if txt == "⬅️ В меню":
+            db.update_user(uid, step="admin_main")
+            kb = [[{"text": "📊 Статистика"}, {"text": "АТАКА"}], [{"text": "АТАКА ДЕТАЛЬНАЯ"}, {"text": "📈 Аналитика"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}], [{"text": "📢 Объявление"}, {"text": "🔎 Поиск пользователя"}], [{"text": "🔓 Разблокировать"}, {"text": "⬅️ В меню"}]]
+            send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
+        else:
+            target_id = txt.strip()
+            target_user = db.get_user(target_id)
+            if target_user:
+                db.update_user(target_id, banned=0)
+                send_msg(cid, f"✅ Foydalanuvchi (ID: {target_id}) blokdan chiqarildi!")
+                send_msg(target_id, "🔔 Sizning hisobingiz admin tomonidan blokdan chiqarildi. Endi botdan foydalanishingiz mumkin.")
+            else:
+                send_msg(cid, "❌ Bunday ID bilan foydalanuvchi topilmadi.")
         return
 
     if u['step'] == "admin_search" and is_owner and txt:

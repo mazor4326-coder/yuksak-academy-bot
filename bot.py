@@ -402,23 +402,38 @@ def handle_update(upd):
         send_msg(uid, TEXTS.get(u.get('lang', 'ru'), TEXTS['ru'])['sub_activated'].format(tariff=tariff))
         return
 
-    # ====== GOD-MODE SUPPORT FAILSAFE (Absolute Top) ======
-    if 'message' in upd and 'text' in upd['message']:
-        _raw = upd['message']['text'].lower()
-        if any(x in _raw for x in ['yordam', 'support', 'поддерж', 'ёрдам', 'tex. yordam', 'tex yordam']):
-            cid = upd['message']['chat']['id']
-            # Har doim ishlaydigan, hech narsaga bog'lanmagan xabar
-            sup_text = "📞 Поддержка / Tex. yordam:\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52\n\n⚠️ Просьба не звонить по пустякам."
-            send_msg(cid, sup_text)
-            return
-    # ======================================================
+    # ====== GLOBAL TRY-EXCEPT & PING ======
+    try:
+        if 'message' in upd and 'text' in upd['message']:
+            if upd['message']['text'] == '/ping':
+                send_msg(upd['message']['chat']['id'], "🏓 PONG! Bot is alive.")
+                return
 
-    if 'message' not in upd: return
-    m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS)
-    u = db.get_user(uid)
-    if not u: db.create_user(uid, m['from'].get('first_name','User'), m['from'].get('username','None')); u = db.get_user(uid)
-    if u.get('banned'): send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned']); return
-    lang = u.get('lang', 'ru'); t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
+        # ====== GOD-MODE SUPPORT FAILSAFE (Absolute Top) ======
+        if 'message' in upd and 'text' in upd['message']:
+            _raw = upd['message']['text'].lower()
+            if any(x in _raw for x in ['yordam', 'support', 'поддерж', 'ёрдам', 'tex. yordam', 'tex yordam']):
+                cid = upd['message']['chat']['id']
+                sup_text = "📞 Поддержка / Tex. yordam:\n\n📱 Telegram: @yuksak_it\n📞 Тел: +998 50 777 51 52"
+                send_msg(cid, sup_text)
+                return
+        
+        if 'message' not in upd: return
+        m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS)
+        u = db.get_user(uid)
+        if not u: 
+            db.create_user(uid, m['from'].get('first_name','User'), m['from'].get('username','None'))
+            u = db.get_user(uid)
+        
+        if not u: return # Database error
+
+        if u.get('banned'): 
+            send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned'])
+            return
+        
+        lang = u.get('lang')
+        if lang not in ['ru', 'uz', 'en']: lang = 'ru'
+        t = TEXTS.get(lang, TEXTS['ru']); txt = m.get('text', '').strip()
 
     # 0. Kontakt yuborilganda (Har doim ishlaydi)
     if 'contact' in m:
@@ -696,6 +711,10 @@ def handle_update(upd):
                         send_vid(cid, i['video'], i.get('caption'))
                 else:
                     send_msg(cid, "🚀 Tez kunda!")
+
+    except Exception as e:
+        for oid in OWNER_IDS:
+            send_msg(oid, f"❌ *BOT ERROR:* `{str(e)}`")
 
 def main():
     print("[*] Bot polling rejimi boshlanmoqda...", flush=True)

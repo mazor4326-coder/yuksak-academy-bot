@@ -698,7 +698,7 @@ def handle_update(upd):
                     found = user; break
             if found:
                 viol = found.get('violations', 0)
-                send_msg(cid, f"✅ *TOPILDI:*\n\n👤 {found.get('name','?')}\n🆔 `{found.get('id','?')}`\n📞 `{found.get('phone','?')}`\n👤 @{found.get('username','?')}\n💎 Tarif: {found.get('sub','none')}\n⚠️ Buzarliklar: {viol}\n🚫 Ban: {'Ha' if found.get('banned') else "Yo'q"}")
+                send_msg(cid, f"""✅ *TOPILDI:*\n\n👤 {found.get('name','?')}\n🆔 `{found.get('id','?')}`\n📞 `{found.get('phone','?')}`\n👤 @{found.get('username','?')}\n💎 Tarif: {found.get('sub','none')}\n⚠️ Buzarliklar: {viol}\n🚫 Ban: {'Ha' if found.get('banned') else "Yo'q"}""")
             else:
                 send_msg(cid, "❌ Foydalanuvchi topilmadi. ID, +998... yoki @username to'g'ri kiriting.")
         return

@@ -1,4 +1,5 @@
 import sys, urllib.request, urllib.parse, json, time, os, threading, re, sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from flask import Flask
 
@@ -102,6 +103,10 @@ class Database:
                 lang TEXT, agreed BOOLEAN DEFAULT 0, unlocked TEXT DEFAULT '[]',
                 ai_history TEXT DEFAULT '[]', violation_history TEXT DEFAULT '[]', temp_video_id TEXT
             )""")
+            try:
+                curr.execute("ALTER TABLE users ADD COLUMN sub_expire TEXT")
+            except:
+                pass
             curr.execute("CREATE TABLE IF NOT EXISTS courses (name TEXT PRIMARY KEY, data TEXT DEFAULT '[]')")
             curr.execute("CREATE TABLE IF NOT EXISTS payments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, amount INTEGER, date TEXT, phone TEXT, tariff TEXT)")
             curr.execute("CREATE TABLE IF NOT EXISTS hacker_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, username TEXT, phone TEXT, bad_text TEXT, reason TEXT, timestamp TEXT)")
@@ -415,18 +420,57 @@ def answer_pre_checkout(pqid, ok=True, err=None):
     try: urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerPreCheckoutQuery", data=urllib.parse.urlencode(p).encode('utf-8'))
     except: pass
 
+SPAM_TRACKER = {}
+
 def handle_update(upd):
     uid = None
     if 'callback_query' in upd: uid = str(upd['callback_query']['from']['id'])
     elif 'message' in upd: uid = str(upd['message']['from']['id'])
     elif 'pre_checkout_query' in upd: uid = str(upd['pre_checkout_query']['from']['id'])
 
+    # --- DDOS PROTECTION (Rate Limiting) ---
+    if uid and uid not in OWNER_IDS:
+        now = time.time()
+        tracker = SPAM_TRACKER.get(uid)
+        if tracker:
+            if now - tracker[1] < 2.0: # 2 seconds window
+                tracker[0] += 1
+                if tracker[0] > 10: # More than 10 requests in 2 seconds = DDoS
+                    if tracker[0] == 11: # Ban only once, log it, then drop all subsequent instantly
+                        u = db.get_user(uid)
+                        if u and not u.get('banned'):
+                            db.update_user(uid, banned=1)
+                            db.add_hacker_log(uid, u.get('name', '?'), u.get('username', '?'), u.get('phone', 'None'), "DDOS / SPAM", "DDoS Attack")
+                            cid = upd.get('callback_query', {}).get('message', {}).get('chat', {}).get('id') or upd.get('message', {}).get('chat', {}).get('id')
+                            if cid: send_msg(cid, "🚫 ВЫ ЗАБЛОКИРОВАНЫ за спам/DDoS атаку.")
+                    return # Instantly drop the spam request to protect the server
+            else:
+                SPAM_TRACKER[uid] = [1, now]
+        else:
+            SPAM_TRACKER[uid] = [1, now]
+    # --- END DDOS PROTECTION ---
+
     if uid:
         u = db.get_user(uid)
-        if u and u.get('banned'):
-            cid = upd.get('callback_query', {}).get('message', {}).get('chat', {}).get('id') or upd.get('message', {}).get('chat', {}).get('id')
-            if cid: send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned'])
-            return
+        if u:
+            # Check expiration
+            exp = u.get('sub_expire')
+            if exp and u['sub'] != 'none':
+                if time.time() > time.mktime(time.strptime(exp, '%Y-%m-%d %H:%M:%S')):
+                    db.update_user(uid, sub='none', sub_expire=None, unlocked=[], ai_count=0)
+                    u['sub'] = 'none'
+                    u['sub_expire'] = None
+                    u['unlocked'] = []
+                    u['ai_count'] = 0
+                    cid = upd.get('callback_query', {}).get('message', {}).get('chat', {}).get('id') or upd.get('message', {}).get('chat', {}).get('id')
+                    if cid:
+                        exp_msg = {'ru': "⚠️ Ваш тариф истек. Пожалуйста, продлите подписку.", 'uz': "⚠️ Tarifingiz muddati tugadi. Iltimos, obunani uzaytiring.", 'en': "⚠️ Your subscription has expired. Please renew."}
+                        send_msg(cid, exp_msg.get(u.get('lang', 'ru'), exp_msg['ru']))
+
+            if u.get('banned'):
+                cid = upd.get('callback_query', {}).get('message', {}).get('chat', {}).get('id') or upd.get('message', {}).get('chat', {}).get('id')
+                if cid: send_msg(cid, TEXTS.get(u.get('lang','ru'), TEXTS['ru'])['user_banned'])
+                return
 
     if 'callback_query' in upd:
         cq = upd['callback_query']; cid = cq['message']['chat']['id']; uid = str(cq['from']['id']); data = cq['data']
@@ -450,7 +494,8 @@ def handle_update(upd):
         sp = upd['message']['successful_payment']; uid = str(upd['message']['from']['id'])
         u = db.get_user(uid); tariff = sp['invoice_payload'].replace("sub_", "").capitalize()
         db.add_payment(uid, sp['total_amount'] // 100, time.strftime('%Y-%m-%d %H:%M:%S'), u.get('phone', 'None'), tariff)
-        db.update_user(uid, sub=tariff.lower())
+        expire_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30 * 86400))
+        db.update_user(uid, sub=tariff.lower(), sub_expire=expire_date, unlocked=[], ai_count=0)
         send_msg(uid, TEXTS.get(u.get('lang', 'ru'), TEXTS['ru'])['sub_activated'].format(tariff=tariff))
         return
 
@@ -480,11 +525,9 @@ def handle_update(upd):
 
     # ====== ULTRA-ROBUST GLOBAL BUTTONS (Har qanday holatda ishlaydi) ======
     if txt:
-        _l = txt.lower()
-        # "yordam", "ёрдам", "поддержка", "support", "asoschi", "founder", "основатель", "назад", "back", "orqaga"
-        is_sup = any(x in _l for x in ["yordam", "ёрдам", "поддерж", "support", "tech", "tex", "тех", "yordam"])
-        is_fnd = any(x in _l for x in ["asoschi", "основател", "founder", "kamolov", "камолов"])
-        is_back = any(x in _l for x in ["orqaga", "назад", "back", "меню", "menu"])
+        is_sup = any(txt == TEXTS[l].get('support_btn') for l in TEXTS)
+        is_fnd = any(txt == TEXTS[l].get('founder_btn') for l in TEXTS)
+        is_back = any(txt == TEXTS[l].get('back_btn') for l in TEXTS)
 
         if is_sup:
             support_msgs = {
@@ -544,8 +587,32 @@ def handle_update(upd):
             db.set_setting('founder_photo', photo_id)
             send_msg(cid, "✅ Asoschi fotosi saqlandi! Endi 'Asoschi' tugmasi bosilganda bu rasm ko'rinadi.", kb=get_main_kb(lang))
             return
+            
+        vid_id = None
         if 'video' in m:
-            db.update_user(uid, temp_video_id=m['video']['file_id'], step="admin_video_cat")
+            vid_id = m['video']['file_id']
+        elif 'document' in m and m['document'].get('mime_type', '').startswith('video/'):
+            vid_id = m['document']['file_id']
+            
+        if vid_id:
+            # Videoni mahalliy diskka ham saqlab qo'yamiz (hech qachon o'chib ketmasligi uchun)
+            def download_video_task(vid):
+                try:
+                    req = urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getFile?file_id={vid}")
+                    res = json.loads(req.read().decode())
+                    if res.get('ok'):
+                        fpath = res['result']['file_path']
+                        if not os.path.exists('videos'): os.makedirs('videos')
+                        ext = fpath.split('.')[-1] if '.' in fpath else 'mp4'
+                        local_path = f"videos/{vid}.{ext}"
+                        urllib.request.urlretrieve(f"https://api.telegram.org/file/bot{TELEGRAM_BOT_TOKEN}/{fpath}", local_path)
+                        print(f"[*] Video downloaded and saved locally to {local_path}", flush=True)
+                except Exception as e:
+                    print(f"[!] Failed to download video {vid}: {e}", flush=True)
+            
+            threading.Thread(target=download_video_task, args=(vid_id,), daemon=True).start()
+            
+            db.update_user(uid, temp_video_id=vid_id, step="admin_video_cat")
             items = [[{"text": c}] for c in t['categories'].values()]
             send_msg(cid, "📁 Category:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
         elif u['step'] == "admin_video_cat" and txt:
@@ -748,6 +815,19 @@ def handle_update(upd):
         send_msg(cid, f"Payment: {txt}", kb=kb)
         return
     elif u['step'] == "ai_chat" and txt:
+        # Check AI limit
+        sub = u.get('sub', 'none')
+        ai_limits = {'none': 0, 'standard': 200, 'platinum': 400, 'vip': 5000}
+        max_ai = ai_limits.get(sub, 0)
+        if not is_owner and u.get('ai_count', 0) >= max_ai:
+            limit_msg = {
+                'ru': f"❌ Вы исчерпали лимит вопросов к AI ({max_ai} шт) для вашего тарифа. Пожалуйста, обновите тариф.",
+                'uz': f"❌ Siz ta'rifingiz uchun AI savollar limitini ({max_ai} ta) tugatdingiz. Iltimos, ta'rifni yangilang.",
+                'en': f"❌ You have reached your AI question limit ({max_ai}) for your current plan. Please upgrade."
+            }
+            send_msg(cid, limit_msg.get(lang, limit_msg['ru']))
+            return
+
         # So'kinish detektori - barcha tillarda
         if detect_profanity(txt):
             v = u['violations'] + 1
@@ -789,7 +869,23 @@ def handle_update(upd):
             else:
                 unl = u.get('unlocked', [])
                 c_id = get_course_id(txt)
-                if txt not in unl: unl.append(txt); db.update_user(uid, unlocked=unl)
+                
+                sub = u.get('sub', 'none')
+                c_limits = {'none': 0, 'standard': 1, 'platinum': 2, 'vip': 9999}
+                max_courses = c_limits.get(sub, 0)
+                
+                if txt not in unl:
+                    if not is_owner and len(unl) >= max_courses:
+                        limit_msg = {
+                            'ru': f"❌ Ваш тариф ({sub.capitalize()}) позволяет открыть только {max_courses} курс(а). Обновите тариф!",
+                            'uz': f"❌ Sizning ta'rifingiz ({sub.capitalize()}) faqat {max_courses} ta kursga ruxsat beradi. Ta'rifni oshiring!",
+                            'en': f"❌ Your plan ({sub.capitalize()}) only allows {max_courses} course(s). Please upgrade!"
+                        }
+                        send_msg(cid, limit_msg.get(lang, limit_msg['ru']))
+                        return
+                    unl.append(txt)
+                    db.update_user(uid, unlocked=unl)
+                    
                 data = db.get_courses().get(c_id)
                 if data:
                     send_msg(cid, t['course_info'].format(course=txt))
@@ -814,16 +910,19 @@ def main():
         print(f"[!] Webhookni o'chirishda xato: {e}", flush=True)
     offset = 0
     print("YUKSAK FULL SEC SQL started.", flush=True)
-    while True:
-        try:
-            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates?offset={offset}&timeout=15"
-            with urllib.request.urlopen(url, timeout=20) as resp:
-                data = json.loads(resp.read().decode('utf-8'))
-                if not data.get('result'): continue
-                for upd in data['result']:
-                    offset = upd['update_id'] + 1
-                    threading.Thread(target=safe_handle, args=(upd,)).start()
-        except: time.sleep(0.5)
+    
+    # 50 ta gacha bir vaqtda ishlaydigan threadlar hovuzi (qotib qolmaslik uchun)
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        while True:
+            try:
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates?offset={offset}&timeout=15"
+                with urllib.request.urlopen(url, timeout=20) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    if not data.get('result'): continue
+                    for upd in data['result']:
+                        offset = upd['update_id'] + 1
+                        executor.submit(safe_handle, upd)
+            except: time.sleep(0.5)
 
 if __name__ == "__main__":
     keep_alive()

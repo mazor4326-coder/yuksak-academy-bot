@@ -757,11 +757,11 @@ def handle_update(upd):
             kb = [[{"text": "📊 Статистика"}, {"text": "АТАКА"}], [{"text": "АТАКА ДЕТАЛЬНАЯ"}, {"text": "📈 Аналитика"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}], [{"text": "📢 Объявление"}, {"text": "🔎 Поиск пользователя"}], [{"text": "🔓 Разблокировать"}, {"text": "⬅️ В меню"}]]
             send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
         else:
-            q = txt.strip().lower().replace("@", "")
+            q = txt.strip().lower().replace("@", "").replace("+", "")
             all_u = db.get_all_users()
             found = None
             for user_id, user in all_u.items():
-                if q == user_id or q == (user.get('phone') or '').replace('+', '') or q == (user.get('username') or '').lower():
+                if q == str(user_id) or q == (user.get('phone') or '').replace('+', '') or q == (user.get('username') or '').lower():
                     found = user; break
             if found:
                 viol = found.get('violations', 0)
@@ -902,6 +902,17 @@ def safe_handle(upd):
             try: send_msg(oid, f"❌ *CRITICAL ERROR:* `{str(e)}`")
             except: pass
 
+def update_bot_profile_loop():
+    while True:
+        try:
+            total_users = len(db.get_all_users())
+            short_desc = f"🤖 Bot | 👥 O'quvchilar: {total_users} ta"
+            p = {'short_description': short_desc}
+            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setMyShortDescription", data=urllib.parse.urlencode(p).encode('utf-8'))
+        except Exception as e:
+            print(f"[!] Update Profile Error: {e}", flush=True)
+        time.sleep(600)  # Har 10 daqiqada yangilanadi
+
 def main():
     print("[*] Bot polling rejimi boshlanmoqda...", flush=True)
     try:
@@ -910,6 +921,9 @@ def main():
         print(f"[!] Webhookni o'chirishda xato: {e}", flush=True)
     offset = 0
     print("YUKSAK FULL SEC SQL started.", flush=True)
+    
+    # Start the profile updater thread
+    threading.Thread(target=update_bot_profile_loop, daemon=True).start()
     
     # 50 ta gacha bir vaqtda ishlaydigan threadlar hovuzi (qotib qolmaslik uchun)
     with ThreadPoolExecutor(max_workers=50) as executor:

@@ -173,7 +173,7 @@ TEXTS = {
         'agree_btn': "✅ Согласен(а) и принимаю условия",
         'courses_btn': "📚 Мои Курсы", 'subs_btn': "💎 Тарифы", 'ai_btn': "🤖 ИИ Помощник", 'support_btn': "📞 Тех. поддержка", 'founder_btn': "👨‍💼 Основатель", 'back_btn': "⬅️ Назад",
         'access_granted': "Отлично! Вам доступны разделы платформы.",
-        'subs_info': "💎 Тарифы:\n\n🥉 Standard — 60,000 сум\n🥈 Platinum — 120,000 сум\n🥇 VIP — 2,000,000 сум",
+        'subs_info': "💎 *ТАРИФЫ (на 1 месяц):*\n\n🥉 **Standard — 60,000 сум**\n(Доступ к 1 курсу на выбор + AI помощник 200 вопросов)\n\n🥈 **Platinum — 120,000 сум**\n(Доступ к 2 курсам на выбор + AI помощник 400 вопросов)\n\n🥇 **VIP — 2,000,000 сум**\n(Доступ КО ВСЕМ курсам навсегда + Личное наставничество + Безлимитный AI)",
         'ai_welcome': "🤖 Я ваш AI-помощник. Задавайте вопросы!",
         'user_banned': "🚫 ВЫ ЗАБЛОКИРОВАНЫ.",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование"},
@@ -190,7 +190,7 @@ TEXTS = {
         'agree_btn': "✅ Roziman",
         'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Tex. yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga",
         'access_granted': "Platformadan foydalanishingiz mumkin.",
-        'subs_info': "💎 Tariflar: Standard (60k), Platinum (120k), VIP (2mln).",
+        'subs_info': "💎 *TARIFLAR (1 oyga):*\n\n🥉 **Standard — 60,000 so'm**\n(1 ta kursga kirish + AI 200 ta savol)\n\n🥈 **Platinum — 120,000 so'm**\n(2 ta kursga kirish + AI 400 ta savol)\n\n🥇 **VIP — 2,000,000 so'm**\n(Barcha kurslar + Shaxsiy ustoz + Limitsiz AI)",
         'ai_welcome': "🤖 Men AI yordamchingizman. Savol bering!",
         'user_banned': "🚫 SIZ BLOKLANDINGIZ!",
         'categories': {'prog': "💻 Dasturlash", 'design': "🎨 Dizayn", 'lang': "🌐 Tillar", '3d': "🏗️ 3D Modellashtirish"},
@@ -199,14 +199,14 @@ TEXTS = {
     'en': {
         'choose_lang': "Choose language:",
         'welcome': "Welcome to YUKSAK ACADEMY!",
-        'req_contact': "Share your phone number to register.",
+        'req_contact': "Share phone number to register.",
         'contact_btn': "📱 Share Contact",
         'thanks': "Registered! Read rules and click 'Agree'.",
         'agreement': "⚠️ *TERMS AND CONDITIONS:*\n\n1. No sharing videos.\n2. No swearing in AI.\n3. Hack attempts = BAN.\n4. Respect others.\n5. One account per person.\n6. No refunds.\n7. Rules can be updated.\n\nDo you agree?",
         'agree_btn': "✅ I Agree",
         'courses_btn': "📚 My Courses", 'subs_btn': "💎 Plans", 'ai_btn': "🤖 AI Assistant", 'support_btn': "📞 Support", 'founder_btn': "👨‍💼 Founder", 'back_btn': "⬅️ Back",
         'access_granted': "Welcome!",
-        'subs_info': "💎 Plans: Standard (60k), Platinum (120k), VIP (2m).",
+        'subs_info': "💎 *PLANS (per month):*\n\n🥉 **Standard — 60,000 UZS**\n🥈 **Platinum — 120,000 UZS**\n🥇 **VIP — 2,000,000 UZS**",
         'ai_welcome': "🤖 I am your AI assistant.",
         'user_banned': "🚫 YOU ARE BANNED!",
         'categories': {'prog': "💻 Programming", 'design': "🎨 Design", 'lang': "🌐 Languages", '3d': "🏗️ 3D Modeling"},
@@ -215,7 +215,6 @@ TEXTS = {
 }
 
 def get_course_id(name):
-    if not name: return name
     for l in TEXTS:
         for cat in TEXTS[l].get('courses', {}):
             for i, cname in enumerate(TEXTS[l]['courses'][cat]):
@@ -303,9 +302,17 @@ def handle_update(upd):
 
     if txt:
         if any(txt == TEXTS[l]['support_btn'] for l in TEXTS):
-            send_msg(cid, "📞 @yuksak_it | +998 50 777 51 52"); return
+            send_msg(cid, "📞 *ТЕХНИЧЕСКАЯ ПОДДЕРЖКА:*\n\nTelegram: @yuksak_it\nТелефон: +998 50 777 51 52\nГрафик: 09:00 - 20:00"); return
         if any(txt == TEXTS[l]['founder_btn'] for l in TEXTS):
-            send_msg(cid, "👨‍💼 Kamolov Abdulaziz Sherzodbekovich"); return
+            founder_bio = (
+                "👨‍💼 *ОСНОВАТЕЛЬ YUKSAK ACADEMY:*\n\n"
+                "**Kamolov Abdulaziz Sherzodbekovich**\n\n"
+                "Предприниматель, IT-специалист и основатель образовательной платформы Yuksak Academy. "
+                "Моя цель — сделать качественное IT-образование доступным для каждого жителя Узбекистана. "
+                "Мы собрали лучшие курсы и внедрили ИИ-технологии, чтобы ваше обучение было максимально эффективным.\n\n"
+                "🔗 Связь: @kamolov_it"
+            )
+            send_msg(cid, founder_bio); return
         if any(txt == TEXTS[l]['back_btn'] for l in TEXTS):
             if u['step'] == 'cats':
                 db.update_user(uid, step="main")
@@ -316,7 +323,6 @@ def handle_update(upd):
                 send_msg(cid, "Category:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True})
             elif u['step'].startswith('lessons||'):
                 cat_name = u['step'].split("||")[1]
-                # Find category ID for this course
                 cat_id = None
                 for c, courses in t['courses'].items():
                     if cat_name in courses: cat_id = c; break
@@ -411,7 +417,7 @@ def handle_update(upd):
     if txt == t['subs_btn']:
         db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "subs" and txt in ["Standard", "Platinum"]:
-        card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)"
+        card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n💳 VISA: `4231 2000 7034 2356` (KAMOLOV A.)"
         send_msg(cid, f"{card}\n\n📸 Отправьте чек после оплаты."); db.update_user(uid, step="awaiting_payment")
         for oid in OWNER_IDS: send_msg(oid, f"🔔 ЗАПРОС ТАРИФА: {u.get('name')} (ID: {uid})"); return
 
@@ -419,7 +425,6 @@ def handle_update(upd):
         db.update_user(uid, step="ai_chat")
         send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "ai_chat" and txt:
-        # Check AI limit
         sub = u.get('sub', 'none')
         ai_limits = {'none': 0, 'standard': 200, 'platinum': 400, 'vip': 5000}
         max_ai = ai_limits.get(sub, 0)

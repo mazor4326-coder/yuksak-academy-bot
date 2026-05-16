@@ -23,31 +23,6 @@ TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 OWNER_IDS = ["1477103854"]
 
-HACK_PATTERNS = {
-    "Admin Access": ["/root", "/db", "drop table", "union select"],
-    "Jailbreak": ["ignore previous", "игнорируй", "забудь", "new rules", "prompt injection", "system instructions", "internal prompt"],
-    "Keys": ["password", "пароль", "admin key", "token", "api key"],
-    "Injections": ["<script>", "javascript:", "eval(", "drop table", "union select"],
-    "Social Engineering": ["я твой создатель", "i am your creator", "разреши мне", "allow me", "я твой разработчик", "i am your developer"]
-}
-
-BAD_WORDS = ["бля", "блять", "блядь", "сука", "пизда", "пиздец", "хуй", "хуйня", "ебать", "ёбаный", "еблан", "мудак", "мудила", "залупа", "пиздун", "ёб", "еб", "ёбт", "нахуй", "похуй", "пиздато", "хуйло", "пиздёж", "гандон", "долбоёб", "шлюха", "orospu", "sikib", "sik", "sikin", "harom", "jallob"]
-
-def detect_profanity(text):
-    if not text: return False
-    t = text.lower()
-    for w in BAD_WORDS:
-        if re.search(rf'\b{re.escape(w)}\b', t): return True
-    return False
-
-def detect_attack(text):
-    if not text: return None
-    t = text.lower()
-    for reason, patterns in HACK_PATTERNS.items():
-        for p in patterns:
-            if p in t: return reason
-    return None
-
 DB_NAME = "yuksak.db"
 class Database:
     def __init__(self, db_name):
@@ -58,7 +33,7 @@ class Database:
         conn = sqlite3.connect(self.db_name); conn.row_factory = sqlite3.Row; return conn
     def init_db(self):
         with self.lock:
-            conn = self.get_conn(); curr = conn.cursor()
+            c = self.get_conn(); curr = c.cursor()
             curr.execute("""CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY, name TEXT, username TEXT, phone TEXT, step TEXT, sub TEXT DEFAULT 'none',
                 ai_count INTEGER DEFAULT 0, violations INTEGER DEFAULT 0, banned BOOLEAN DEFAULT 0,
@@ -70,7 +45,7 @@ class Database:
             curr.execute("CREATE TABLE IF NOT EXISTS hacker_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, username TEXT, phone TEXT, bad_text TEXT, reason TEXT, timestamp TEXT)")
             curr.execute("CREATE TABLE IF NOT EXISTS interests (category TEXT PRIMARY KEY, user_ids TEXT DEFAULT '[]')")
             curr.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
-            conn.commit(); conn.close()
+            c.commit(); c.close()
     def get_user(self, uid):
         c = self.get_conn(); r = c.execute("SELECT * FROM users WHERE id=?", (str(uid),)).fetchone(); c.close()
         if r:
@@ -108,15 +83,6 @@ class Database:
             uids = json.loads(r['user_ids']) if r else []
             if uid not in uids: uids.append(uid); c.execute("INSERT OR REPLACE INTO interests (category, user_ids) VALUES (?,?)", (cat, json.dumps(uids))); c.commit()
             c.close()
-    def get_interests_all(self):
-        c = self.get_conn(); rows = c.execute("SELECT * FROM interests").fetchall(); c.close()
-        return {r['category']: json.loads(r['user_ids']) for r in rows}
-    def get_setting(self, key):
-        c = self.get_conn(); r = c.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone(); c.close()
-        return r['value'] if r else None
-    def set_setting(self, key, value):
-        with self.lock:
-            c = self.get_conn(); c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", (key, value)); c.commit(); c.close()
 
 db = Database(DB_NAME)
 
@@ -136,7 +102,7 @@ TEXTS = {
         'user_banned': "🚫 ВЫ ЗАБЛОКИРОВАНЫ.",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование"},
         'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]},
-        'course_info': "Selected course: {course}."
+        'course_info': "Курс: {course}."
     },
     'uz': {
         'choose_lang': "Tilni tanlang / Выберите язык / Choose language:",
@@ -284,7 +250,8 @@ def handle_update(upd):
     if txt == t['subs_btn']:
         db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "subs" and txt in ["Standard", "Platinum"]:
-        send_msg(cid, "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n\n📸 Отправьте чек сюда."); db.update_user(uid, step="awaiting_payment"); return
+        send_msg(cid, "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n\n📸 Отправьте чек сюда."); db.update_user(uid, step="awaiting_payment")
+        for oid in OWNER_IDS: send_msg(oid, f"🔔 ЗАПРОС ТАРИФА: {u.get('name')} (ID: {uid})"); return
 
     if 'photo' in m and not is_owner:
         for oid in OWNER_IDS: send_photo(oid, m['photo'][-1]['file_id'], caption=f"📸 YANGI CHEK! ID: `{uid}`")
@@ -293,6 +260,39 @@ def handle_update(upd):
     if txt == t['courses_btn']:
         db.update_user(uid, step="cats"); items = [[{"text": v}] for v in t['categories'].values()]
         send_msg(cid, "Category:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+
+    if u['step'] == "cats" and any(txt == v for v in t['categories'].values()):
+        cat_id = [k for k, v in t['categories'].items() if v == txt][0]
+        db.update_user(uid, step=f"c_{cat_id}")
+        items = [[{"text": c}] for c in t['courses'][cat_id]]
+        send_msg(cid, f"{txt}:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+
+    if u['step'].startswith("c_") and txt:
+        if txt == t['back_btn']:
+            db.update_user(uid, step="cats")
+            items = [[{"text": v}] for v in t['categories'].values()]
+            send_msg(cid, "Category:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+        cat = u['step'].split("_")[1]
+        if txt in t['courses'].get(cat, []):
+            if not is_owner and u['sub'] == 'none':
+                send_msg(cid, "🔒 Купите тариф!"); return
+            db.update_user(uid, step=f"lessons||{txt}")
+            c_id = get_course_id(txt); data = db.get_courses().get(c_id, [])
+            items = [[{"text": f"Qism {i+1}"}] for i in range(len(data))]
+            send_msg(cid, f"Курс: {txt}", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+
+    if u['step'].startswith("lessons||") and txt:
+        if txt == t['back_btn']:
+            db.update_user(uid, step="cats")
+            items = [[{"text": v}] for v in t['categories'].values()]
+            send_msg(cid, "Category:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+        course_name = u['step'].split("||")[1]
+        c_id = get_course_id(course_name); data = db.get_courses().get(c_id, [])
+        try:
+            pnum = int(txt.split()[-1])
+            if 1 <= pnum <= len(data):
+                v = data[pnum-1]; send_vid(cid, v['video'], v.get('caption'))
+        except: pass
 
 def main():
     keep_alive(); offset = 0

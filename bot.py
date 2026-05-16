@@ -203,7 +203,7 @@ TEXTS = {
         'ai_thinking': "🤔 Думаю...",
         'admin_main': "🛠️ Админ-панель",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование", '1c': "📊 1С Бухгалтерия", 'comp': "🖥️ Компьютерная грамотность"},
-        'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через AI"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["🏠 3ds Max", "🧱 Blender"], '1c': [f"📉 1С: Бухгалтерия {i}-курс" for i in range(1, 6)], 'comp': ["🖥️ Компьютер с нуля"]},
+        'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через AI"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"], '1c': [f"📉 1С: Бухгалтерия {i}-курс" for i in range(1, 6)], 'comp': ["🖥️ Компьютер с нуля"]},
         'course_info': "Курс: {course}."
     },
     'uz': {
@@ -224,7 +224,7 @@ TEXTS = {
         'ai_thinking': "🤔 O'ylayapman...",
         'admin_main': "🛠️ Админ",
         'categories': {'prog': "💻 Dasturlash", 'design': "🎨 Dizayn", 'lang': "🌐 Tillar", '3d': "🏗️ 3D Modellashtirish", '1c': "📊 1С Buxgalteriya", 'comp': "🖥️ Kompyuter savodxonligi"},
-        'courses': {'prog': ["🤖 Telegram botlar yaratish", "🌐 Saytlar yaratish"], 'design': ["AI orqali dizayn yaratish"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["🏠 3ds Max", "🧱 Blender"], '1c': [f"📉 1С: Buxgalteriya {i}-курс" for i in range(1, 6)], 'comp': ["🖥️ Kompyuter savodxonligi"]},
+        'courses': {'prog': ["🤖 Telegram botlar yaratish", "🌐 Saytlar yaratish"], 'design': ["AI orqali dizayn yaratish"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"], '1c': [f"📉 1С: Buxgalteriya {i}-курс" for i in range(1, 6)], 'comp': ["🖥️ Kompyuter savodxonligi"]},
         'course_info': "Siz {course} kursini tanladingiz."
     },
     'en': {
@@ -245,7 +245,7 @@ TEXTS = {
         'ai_thinking': "🤔 Thinking...",
         'admin_main': "🛠️ Admin Panel",
         'categories': {'prog': "💻 Programming", 'design': "🎨 Design", 'lang': "🌐 Languages", '3d': "🏗️ 3D Modeling", '1c': "📊 1C Accounting", 'comp': "🖥️ Computer Literacy"},
-        'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["🏠 3ds Max", "🧱 Blender"], '1c': [f"📉 1C: Accounting {i}" for i in range(1, 6)], 'comp': ["🖥️ Computer Basics"]},
+        'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"], '1c': [f"📉 1C: Accounting {i}" for i in range(1, 6)], 'comp': ["🖥️ Computer Basics"]},
         'course_info': "Selected course: {course}."
     }
 }
@@ -862,6 +862,12 @@ def handle_update(upd):
         items = [{"text": c} for c in t['courses'][cid_]]
         send_msg(cid, f"{txt}:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True}); db.update_interest(txt, uid)
     elif u['step'].startswith("c_") and txt:
+        if txt == t['back_btn']:
+            db.update_user(uid, step="cats")
+            items = [{"text": c} for c in t['categories'].values()]
+            send_msg(cid, "Category:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+            return
+            
         cat = u['step'].split("_")[1]
         if txt in t['courses'].get(cat, []):
             if not is_owner and u['sub'] == 'none':
@@ -888,11 +894,43 @@ def handle_update(upd):
                     
                 data = db.get_courses().get(c_id)
                 if data:
-                    send_msg(cid, t['course_info'].format(course=txt))
-                    for i in data:
-                        send_vid(cid, i['video'], i.get('caption'))
+                    db.update_user(uid, step=f"lessons||{txt}")
+                    prefix = "Часть" if lang == 'ru' else ("Qism" if lang == 'uz' else "Part")
+                    items = [{"text": f"{prefix} {i+1}"} for i in range(len(data))]
+                    send_msg(cid, t['course_info'].format(course=txt), kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True})
                 else:
                     send_msg(cid, "🚀 Tez kunda!")
+
+    elif u['step'].startswith("lessons||") and txt:
+        course_name = u['step'].split("||")[1]
+        if txt == t['back_btn']:
+            cat_id = None
+            for c, courses in t['courses'].items():
+                if course_name in courses:
+                    cat_id = c
+                    break
+            if cat_id:
+                db.update_user(uid, step=f"c_{cat_id}")
+                items = [{"text": c} for c in t['courses'][cat_id]]
+                send_msg(cid, f"📚 {t['categories'].get(cat_id, 'Course')}:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+            else:
+                db.update_user(uid, step="cats")
+                items = [{"text": c} for c in t['categories'].values()]
+                send_msg(cid, "Category:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+            return
+
+        c_id = get_course_id(course_name)
+        data = db.get_courses().get(c_id)
+        if data:
+            try:
+                part_num = int(txt.split()[-1])
+                if 1 <= part_num <= len(data):
+                    video_info = data[part_num-1]
+                    send_vid(cid, video_info['video'], video_info.get('caption'))
+                else:
+                    send_msg(cid, "❌ Topilmadi" if lang == 'uz' else ("❌ Not found" if lang == 'en' else "❌ Не найдено"))
+            except ValueError:
+                pass
 
 def safe_handle(upd):
     try:

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YUKSAK ACADEMY | Админ Панель</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body { padding-top: 2rem; background: var(--bg-darker); }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 4rem; }
+        .stat-card { padding: 2rem; text-align: center; border-radius: 16px; }
+        .stat-value { font-size: 2.5rem; font-weight: 900; color: var(--primary); margin-bottom: 0.5rem; }
+        .stat-label { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .data-section { margin-bottom: 4rem; }
+        .data-section h3 { margin-bottom: 1.5rem; color: #fff; font-size: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--glass-border); }
+        th { color: var(--primary); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+        .badge { padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+        .badge-danger { background: rgba(255, 50, 50, 0.2); color: #ff5555; }
+        .badge-success { background: rgba(50, 255, 50, 0.2); color: #55ff55; }
+        
+        .log-box { background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; color: #aaa; margin-bottom: 1rem; border: 1px solid var(--glass-border); }
+        .log-box strong { color: var(--primary); }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <div class="admin-header">
+            <a href="/" class="logo">YUKSAK <span>ADMIN</span></a>
+            <a href="/" class="btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;">На сайт</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card glass">
+                <div class="stat-value">{{ users_count }}</div>
+                <div class="stat-label">Пользователей</div>
+            </div>
+            <div class="stat-card glass">
+                <div class="stat-value" style="color: #55ff55;">{{ payments_total }}</div>
+                <div class="stat-label">Оплат (UZS)</div>
+            </div>
+            <div class="stat-card glass">
+                <div class="stat-value" style="color: #ff5555;">{{ banned_count }}</div>
+                <div class="stat-label">Заблокировано</div>
+            </div>
+            <div class="stat-card glass">
+                <div class="stat-value" style="color: #a855f7;">{{ extra_buyers }}</div>
+                <div class="stat-label">Доп. вопросы</div>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>🛡️ Последние попытки взлома (Total Security)</h3>
+            {% if hacker_logs %}
+                {% for log in hacker_logs %}
+                <div class="log-box">
+                    <strong>[{{ log.timestamp }}]</strong> ID: {{ log.user_id }} | @{{ log.username }}<br>
+                    <span style="color: #ff5555;">Угроза: {{ log.reason }}</span><br>
+                    Текст: <i>{{ log.bad_text }}</i>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-muted);">Попыток взлома не обнаружено. Система в безопасности.</p>
+            {% endif %}
+        </div>
+
+        <div class="data-section">
+            <h3>👥 База Пользователей (Последние 50)</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя</th>
+                            <th>Username</th>
+                            <th>Телефон</th>
+                            <th>Тариф</th>
+                            <th>Доп. ИИ</th>
+                            <th>Статус</th>
+                            <th>Управление</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+                            <td>{{ u.name }}</td>
+                            <td>{% if u.username %}@{{ u.username }}{% else %}-{% endif %}</td>
+                            <td>{{ u.phone or '-' }}</td>
+                            <td>
+                                {% if u.sub == 'none' %}<span style="color: var(--text-muted);">Без тарифа</span>
+                                {% else %}<strong style="color: var(--primary);">{{ u.sub | upper }}</strong>{% endif %}
+                            </td>
+                            <td>
+                                {% if u.extra_ai and u.extra_ai > 0 %}<strong style="color: #a855f7;">+{{ u.extra_ai }}</strong>{% else %}-{% endif %}
+                            </td>
+                            <td>
+                                {% if u.banned %}
+                                    <span class="badge badge-danger">BANNED</span>
+                                {% else %}
+                                    <span class="badge badge-success">ACTIVE</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="/grant_access" method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                                    <select name="action" style="padding: 0.3rem; border-radius: 4px; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--glass-border);">
+                                        <option value="standard">Тариф Standard</option>
+                                        <option value="platinum">Тариф Platinum</option>
+                                        <option value="vip">Тариф VIP</option>
+                                        <option value="extra100">+100 AI Вопросов</option>
+                                        <option value="extra200">+200 AI Вопросов</option>
+                                    </select>
+                                    <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: var(--primary); border-color: var(--primary);">💳 Выдать</button>
+                                </form>
+                                {% if u.banned %}
+                                <form action="/unban" method="POST" style="margin-top: 0.5rem;">
+                                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                                    <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ff5555; border-color: #ff5555; width: 100%;">🔓 Разблокировать</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -33,7 +33,10 @@
     <div class="container">
         <div class="admin-header">
             <a href="/" class="logo">YUKSAK <span>ADMIN</span></a>
-            <a href="/" class="btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;">На сайт</a>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="#receipts" class="btn-outline" style="background: var(--primary); color: #000; border: none; font-weight: bold; padding: 0.6rem 1.2rem;">🔍 Проверка чеков</a>
+                <a href="/" class="btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;">На сайт</a>
+            </div>
         </div>
 
         <div class="stats-grid">
@@ -55,7 +58,7 @@
             </div>
         </div>
 
-        <div class="data-section">
+        <div class="data-section" id="receipts">
             <h3>🆕 Проверка чеков (Ожидают подтверждения)</h3>
             <div style="overflow-x: auto;">
                 <table>

@@ -779,7 +779,15 @@ def handle_update(upd):
     if u['step'] == "admin_broadcast" and is_owner and txt:
         if txt == "⬅️ В меню" or txt == '/admin':
             db.update_user(uid, step="admin_main")
-            kb = [[{"text": "📊 Статистика"}, {"text": "АТАКА"}], [{"text": "АТАКА ДЕТАЛЬНАЯ"}, {"text": "📈 Аналитика"}], [{"text": "💰 Финансы"}, {"text": "👥 Участники"}], [{"text": "🎬 Видео контент"}, {"text": "🤖 AI логи"}], [{"text": "📢 Объявление"}, {"text": "🔎 Поиск пользователя"}], [{"text": "🔓 Разблокировать"}, {"text": "⬅️ В меню"}]]
+            kb = [
+                [{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}],
+                [{"text": "АТАКА"}, {"text": "АТАКА ДЕТАЛЬНАЯ"}],
+                [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}],
+                [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}],
+                [{"text": "🤖 AI логи"}, {"text": "📢 Объявление"}],
+                [{"text": "🔎 Поиск пользователя"}, {"text": "🔓 Разблокировать"}],
+                [{"text": "⬅️ В меню"}]
+            ]
             send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
         else:
             all_u = db.get_all_users(); count = 0
@@ -789,6 +797,13 @@ def handle_update(upd):
             db.update_user(uid, step="admin_main")
             send_msg(cid, f"✅ Xabar {count} ta foydalanuvchiga yuborildi!")
         return
+
+    if u['step'] == "admin_main" and is_owner and txt:
+        if txt == "🔍 Проверка чеков":
+            admin_url = "https://yuksak-academy-bot.onrender.com/admin"
+            send_msg(cid, f"📑 *Проверка чеков*\n\nВсе новые оплаты и чеки проверяются в веб-панели:\n{admin_url}")
+            return
+        elif txt == "📊 Статистика":
 
     if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')

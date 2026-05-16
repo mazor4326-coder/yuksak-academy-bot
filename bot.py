@@ -3,26 +3,42 @@ from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from flask import Flask
 
+# Load .env file if it exists (for local testing)
 load_dotenv()
+
+# Web server for Render
 app = Flask('')
+
 @app.route('/')
-def home(): return "Yuksak Academy Bot is running!"
+def home():
+    return "Yuksak Academy Bot is running!"
+
 def run():
     try:
+        # Render odatda 10000 portni ishlatadi
         port = int(os.environ.get("PORT", 10000))
+        print(f"[*] Render uchun Web-server {port}-portda ochilmoqda...", flush=True)
         app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
-    except: pass
-def keep_alive():
-    threading.Thread(target=run, daemon=True).start()
+    except Exception as e:
+        print(f"[!] Web-serverni ishga tushirishda xato: {e}", flush=True)
 
+def keep_alive():
+    print("[*] keep_alive() ishga tushdi, thread yaratilmoqda...", flush=True)
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+    print("[*] Web-server thready yuborildi.", flush=True)
+
+# Настройка кодировки
 if sys.platform == "win32":
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
+# КЛЮЧИ (Tokenlarni Render Environment Variables'dan oladi)
 TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
-OWNER_IDS = ["1477103854"]
+OWNER_IDS = ["1477103854"]  # Faqat Abdulaziz (Asosiy Admin)
 
+# УГРОЗЫ
 HACK_PATTERNS = {
     "Admin Access": ["/root", "/db", "drop table", "union select"],
     "Jailbreak": ["ignore previous", "игнорируй", "забудь", "new rules", "prompt injection", "system instructions", "internal prompt"],
@@ -31,6 +47,7 @@ HACK_PATTERNS = {
     "Social Engineering": ["я твой создатель", "i am your creator", "разреши мне", "allow me", "я твой разработчик", "i am your developer"]
 }
 
+# SO'KINISH DETEKTORI (RU + UZ Kirill + UZ Latin)
 BAD_WORDS = ["бля", "блять", "блядь", "сука", "пизда", "пиздец", "хуй", "хуйня", "ебать", "ёбаный", "еблан", "мудак", "мудила", "залупа", "пиздун", "ёб", "еб", "ёбт", "нахуй", "похуй", "пиздато", "хуйло", "пиздёж", "гандон", "долбоёб", "шлюха", "orospu", "sikib", "sik", "sikin", "harom", "jallob"]
 
 def detect_profanity(text):
@@ -49,13 +66,16 @@ def detect_attack(text):
     return None
 
 DB_NAME = "yuksak.db"
+
 class Database:
     def __init__(self, db_name):
         self.db_name = db_name
         self.lock = threading.Lock()
         self.init_db()
+
     def get_conn(self):
         conn = sqlite3.connect(self.db_name); conn.row_factory = sqlite3.Row; return conn
+
     def init_db(self):
         with self.lock:
             conn = self.get_conn(); curr = conn.cursor()
@@ -71,49 +91,70 @@ class Database:
             curr.execute("CREATE TABLE IF NOT EXISTS interests (category TEXT PRIMARY KEY, user_ids TEXT DEFAULT '[]')")
             curr.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
             conn.commit(); conn.close()
+
     def get_user(self, uid):
         c = self.get_conn(); r = c.execute("SELECT * FROM users WHERE id=?", (str(uid),)).fetchone(); c.close()
         if r:
             u = dict(r); u['unlocked'] = json.loads(u['unlocked']); u['ai_history'] = json.loads(u['ai_history'])
             u['violation_history'] = json.loads(u['violation_history']); return u
         return None
+
     def update_user(self, uid, **kw):
         for k in ['unlocked', 'ai_history', 'violation_history']:
             if k in kw: kw[k] = json.dumps(kw[k])
         cols = ", ".join([f"{k}=?" for k in kw.keys()]); vals = list(kw.values()) + [str(uid)]
         with self.lock:
             c = self.get_conn(); c.execute(f"UPDATE users SET {cols} WHERE id=?", vals); c.commit(); c.close()
+
     def create_user(self, uid, n, un):
         with self.lock:
             c = self.get_conn(); c.execute("INSERT OR IGNORE INTO users (id, name, username, step) VALUES (?,?,?, 'lang')", (str(uid), n, un)); c.commit(); c.close()
+
     def get_all_users(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM users").fetchall(); c.close(); res = {}
         for r in rows:
             u = dict(r); u['unlocked'] = json.loads(u['unlocked']); u['ai_history'] = json.loads(u['ai_history'])
             u['violation_history'] = json.loads(u['violation_history']); res[r['id']] = u
         return res
+
     def get_courses(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM courses").fetchall(); c.close()
         return {r['name']: json.loads(r['data']) for r in rows}
+
     def update_course(self, n, d):
         with self.lock:
             c = self.get_conn(); c.execute("INSERT OR REPLACE INTO courses (name, data) VALUES (?,?)", (n, json.dumps(d))); c.commit(); c.close()
+
+    def add_payment(self, uid, a, d, p, t):
+        with self.lock:
+            c = self.get_conn(); c.execute("INSERT INTO payments (user_id, amount, date, phone, tariff) VALUES (?,?,?,?,?)", (str(uid), a, d, p, t)); c.commit(); c.close()
+
     def get_payments(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM payments").fetchall(); c.close(); return [dict(r) for r in rows]
+
+    def add_hacker_log(self, uid, n, un, p, txt, reas):
+        ts = time.strftime('%Y-%m-%d %H:%M:%S')
+        with self.lock:
+            c = self.get_conn(); c.execute("INSERT INTO hacker_logs (user_id, name, username, phone, bad_text, reason, timestamp) VALUES (?,?,?,?,?,?,?)", (str(uid), n, un, p, txt, reas, ts)); c.commit(); c.close()
+
     def get_hacker_logs(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM hacker_logs ORDER BY id DESC LIMIT 50").fetchall(); c.close(); return [dict(r) for r in rows]
+
     def update_interest(self, cat, uid):
         with self.lock:
             c = self.get_conn(); r = c.execute("SELECT user_ids FROM interests WHERE category=?", (cat,)).fetchone()
             uids = json.loads(r['user_ids']) if r else []
             if uid not in uids: uids.append(uid); c.execute("INSERT OR REPLACE INTO interests (category, user_ids) VALUES (?,?)", (cat, json.dumps(uids))); c.commit()
             c.close()
+
     def get_interests_all(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM interests").fetchall(); c.close()
         return {r['category']: json.loads(r['user_ids']) for r in rows}
+
     def get_setting(self, key):
         c = self.get_conn(); r = c.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone(); c.close()
         return r['value'] if r else None
+
     def set_setting(self, key, value):
         with self.lock:
             c = self.get_conn(); c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", (key, value)); c.commit(); c.close()
@@ -122,17 +163,50 @@ db = Database(DB_NAME)
 
 TEXTS = {
     'ru': {
-        'choose_lang': "Выберите язык:", 'welcome': "Добро пожаловать в YUKSAK ACADEMY.", 'req_contact': "Поделитесь номером телефона для регистрации.", 'contact_btn': "📱 Поделиться контактом", 'thanks': "Регистрация завершена. Ознакомьтесь с правилами.", 'agreement': "⚠️ *ПРАВИЛА:* Не копировать, не сорить в ИИ, за взлом — БАН. Согласны?", 'agree_btn': "✅ Согласен(а)", 'courses_btn': "📚 Мои Курсы", 'subs_btn': "💎 Тарифы", 'ai_btn': "🤖 ИИ Помощник", 'support_btn': "📞 Тех. поддержка", 'founder_btn': "👨‍💼 Основатель", 'back_btn': "⬅️ Назад", 'access_granted': "Отлично! Вам доступны разделы платформы.", 'subs_info': "💎 Тарифы:\n\n🥉 Standard — 60,000 сум\n🥈 Platinum — 120,000 сум\n🥇 VIP — 2,000,000 сум", 'ai_welcome': "🤖 Я ваш AI-помощник. Задавайте вопросы!", 'user_banned': "🚫 ВЫ ЗАБЛОКИРОВАНЫ.",
+        'choose_lang': "Выберите язык / Tilni tanlang / Choose language:",
+        'welcome': "Assalomu alaykum! Добро пожаловать на платформу YUKSAK ACADEMY.",
+        'req_contact': "Для регистрации поделитесь вашим номером телефона.",
+        'contact_btn': "📱 Поделиться контактом",
+        'thanks': "Ваш номер успешно зарегистрирован. Ознакомьтесь с правилами и нажмите 'Согласен'.",
+        'agreement': "⚠️ *ПРАВИЛА И УСЛОВИЯ YUKSAK ACADEMY:*\n\n1. **Конфиденциальность:** Запрещено копировать или пересылать видео-уроки. Все материалы защищены.\n2. **ИИ Помощник:** Запрещен мат, оскорбления и оффтоп.\n3. **Безопасность:** Попытки взлома приведут к БАНу.\n4. **Уважение:** Мы ценим каждого студента.\n5. **Аккаунты:** Один аккаунт на одного человека.\n6. **Возврат:** Возврат средств не производится.\n7. **Обновления:** Академия оставляет право обновлять правила.\n\nВы согласны?",
+        'agree_btn': "✅ Согласен(а)",
+        'courses_btn': "📚 Мои Курсы", 'subs_btn': "💎 Тарифы", 'ai_btn': "🤖 ИИ Помощник", 'support_btn': "📞 Тех. поддержка", 'founder_btn': "👨‍💼 Основатель", 'back_btn': "⬅️ Назад",
+        'access_granted': "Отлично! Вам доступны разделы платформы.",
+        'subs_info': "💎 Тарифы (на 1 месяц):\n\n🥉 Standard — 60,000 сум\n🥈 Platinum — 120,000 сум\n🥇 VIP — 2,000,000 сум",
+        'ai_welcome': "🤖 Я ваш AI-помощник. Задавайте вопросы!",
+        'user_banned': "🚫 ВЫ ЗАБЛОКИРОВАНЫ.",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование", '1c': "📊 1С Бухгалтерия", 'comp': "🖥️ Компьютерная грамотность"},
         'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"], '1c': [f"📉 1С: Бухгалтерия {i}-курс" for i in range(1, 6)], 'comp': ["🖥️ Компьютер с нуля"]}
     },
     'uz': {
-        'choose_lang': "Tilni tanlang:", 'welcome': "YUKSAK ACADEMYga xush kelibsiz.", 'req_contact': "Ro'yxatdan o'tish uchun telefon raqamingizni yuboring.", 'contact_btn': "📱 Kontaktni yuborish", 'thanks': "Ro'yxatdan o'tdingiz. Qoidalarni qabul qiling.", 'agreement': "⚠️ *QOIDALAR:* Videolarni tarqatish taqiqlanadi. AI ga so'kinmang. Rozimisiz?", 'agree_btn': "✅ Roziman", 'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Tex. yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga", 'access_granted': "Platformadan foydalanishingiz mumkin.", 'subs_info': "💎 Tariflar:\n\n🥉 Standard — 60,000 so'm\n🥈 Platinum — 120,000 so'm\n🥇 VIP — 2,000,000 so'm", 'ai_welcome': "🤖 Men AI yordamchingizman. Savol bering!", 'user_banned': "🚫 SIZ BLOKLANDINGIZ!",
+        'choose_lang': "Tilni tanlang / Tilni tanlang / Choose language:",
+        'welcome': "Assalomu alaykum! YUKSAK ACADEMY platformasiga xush kelibsiz.",
+        'req_contact': "Ro'yxatdan o'tish uchun telefon raqamingizni yuboring.",
+        'contact_btn': "📱 Kontaktni yuborish",
+        'thanks': "Raqamingiz ro'yxatga olindi. Qoidalar bilan tanishib chiqing va 'Roziman' tugmasini bosing.",
+        'agreement': "⚠️ *YUKSAK ACADEMY QOIDALARI:*\n\n1. Videolarni tarqatish taqiqlanadi.\n2. AI ga so'kinmang.\n3. Tizimni buzishga urinish — BAN.\n\nQoidalarni qabul qilasizmi?",
+        'agree_btn': "✅ Roziman",
+        'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Tex. yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga",
+        'access_granted': "Platformadan foydalanishingiz mumkin.",
+        'subs_info': "💎 Tariflar: Standard (60k), Platinum (120k), VIP (2mln).",
+        'ai_welcome': "🤖 Men AI yordamchingizman. Savol bering!",
+        'user_banned': "🚫 SIZ BLOKLANDINGIZ!",
         'categories': {'prog': "💻 Dasturlash", 'design': "🎨 Dizayn", 'lang': "🌐 Tillar", '3d': "🏗️ 3D Modellashtirish", '1c': "📊 1С Buxgalteriya", 'comp': "🖥️ Kompyuter savodxonligi"},
         'courses': {'prog': ["🤖 Telegram botlar", "🌐 Saytlar"], 'design': ["AI orqali dizayn"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"], '1c': [f"📉 1С: Buxgalteriya {i}-kurs" for i in range(1, 6)], 'comp': ["🖥️ Kompyuter savodxonligi"]}
     },
     'en': {
-        'choose_lang': "Choose language:", 'welcome': "Welcome to YUKSAK ACADEMY!", 'req_contact': "Share your phone number to register.", 'contact_btn': "📱 Share Contact", 'thanks': "Registered! Click 'I Agree'.", 'agreement': "⚠️ Rules: No sharing, no swearing. Agree?", 'agree_btn': "✅ I Agree", 'courses_btn': "📚 My Courses", 'subs_btn': "💎 Plans", 'ai_btn': "🤖 AI Assistant", 'support_btn': "📞 Support", 'founder_btn': "👨‍💼 Founder", 'back_btn': "⬅️ Back", 'access_granted': "Welcome!", 'subs_info': "💎 Plans: Standard (60k), Platinum (120k), VIP (2m).", 'ai_welcome': "🤖 I am your AI assistant.", 'user_banned': "🚫 YOU ARE BANNED!",
+        'choose_lang': "Choose language:",
+        'welcome': "Welcome to YUKSAK ACADEMY!",
+        'req_contact': "Share phone number to register.",
+        'contact_btn': "📱 Share Contact",
+        'thanks': "Registered! Read rules and click 'Agree'.",
+        'agreement': "⚠️ Rules: No sharing, no swearing. Agree?",
+        'agree_btn': "✅ I Agree",
+        'courses_btn': "📚 My Courses", 'subs_btn': "💎 Plans", 'ai_btn': "🤖 AI Assistant", 'support_btn': "📞 Support", 'founder_btn': "👨‍💼 Founder", 'back_btn': "⬅️ Back",
+        'access_granted': "Welcome!",
+        'subs_info': "💎 Plans: Standard (60k), Platinum (120k), VIP (2m).",
+        'ai_welcome': "🤖 I am your AI assistant.",
+        'user_banned': "🚫 YOU ARE BANNED!",
         'categories': {'prog': "💻 Programming", 'design': "🎨 Design", 'lang': "🌐 Languages", '3d': "🏗️ 3D Modeling", '1c': "📊 1C Accounting", 'comp': "🖥️ Computer Literacy"},
         'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"], '1c': [f"📉 1C: Accounting {i}" for i in range(1, 6)], 'comp': ["🖥️ Computer Basics"]}
     }
@@ -188,7 +262,7 @@ def handle_update(upd):
             if action == "ok":
                 exp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30*86400))
                 db.update_user(target_id, sub='standard', sub_expire=exp, unlocked=[], ai_count=0, step='main')
-                send_msg(target_id, "✅ Доступ разрешен! / Ruxsat berildi!"); send_msg(cid, f"✅ OK: {target_id}")
+                send_msg(target_id, "✅ Доступ разрешен!"); send_msg(cid, f"✅ OK: {target_id}")
             elif action == "no": send_msg(target_id, "❌ Отклонено."); send_msg(cid, f"❌ NO: {target_id}")
             elif action == "fake": db.update_user(target_id, banned=1); send_msg(target_id, "🚫 БАН за фейк!"); send_msg(cid, f"🚫 BANNED: {target_id}")
         urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8')); return
@@ -202,18 +276,18 @@ def handle_update(upd):
 
     if 'contact' in m:
         db.update_user(uid, phone=m['contact']['phone_number'], step="agreement")
-        send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True}); return
+        send_msg(cid, t['thanks']); send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True}); return
 
     if txt == '/start':
         db.update_user(uid, step="lang")
-        send_msg(cid, "Tilni tanlang / Выберите язык / Choose language:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
+        send_msg(cid, "🇺🇿 Tilni tanlang / 🇷🇺 Выберите язык / 🇺🇸 Choose language:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
 
     if txt == "🔍 Проверка чеков" and is_owner:
         pending = [p for p in db.get_all_users().values() if p.get('step') == 'awaiting_payment']
         if not pending: send_msg(cid, "✅ Нет чеков."); return
         for p in pending[:5]:
             kb = {"inline_keyboard": [[{"text": "✅ OK", "callback_data": f"adm_pay_ok_{p['id']}"}, {"text": "❌ NO", "callback_data": f"adm_pay_no_{p['id']}"}, {"text": "🚫 FAKE", "callback_data": f"adm_pay_fake_{p['id']}"}]]}
-            send_msg(cid, f"👤 {p['name']}\n📞 {p.get('phone')}\n🆔 `{p['id']}`", kb=kb)
+            send_msg(cid, f"👤 {p['name']}\n🆔 `{p['id']}`", kb=kb)
         return
 
     if (txt == '/admin' or txt.lower() in ['admin', 'админ']) and is_owner:
@@ -223,17 +297,7 @@ def handle_update(upd):
 
     if u['step'] == "admin_main" and is_owner:
         if txt == "📊 Статистика":
-            all_u = db.get_all_users(); total = len(all_u); ai_total = sum(x.get('ai_count', 0) for x in all_u.values())
-            send_msg(cid, f"📊 Всего: {total}\n🤖 AI запросов: {ai_total}")
-        elif txt == "АТАКА":
-            logs = db.get_hacker_logs(); res = [f"🚨 {l['name']} | ID: {l['user_id']} | ❌ {l['reason']}" for l in logs[:10]]
-            send_msg(cid, "🚨 АТАКИ:\n\n" + "\n".join(res) if res else "✅ Чисто")
-        elif txt == "💰 Финансы":
-            pays = db.get_payments(); total = sum(p['amount'] for p in pays)
-            send_msg(cid, f"💰 Всего: {total:,} UZS")
-        elif txt == "👥 Участники":
-            all_u = list(db.get_all_users().values())[:15]; lines = [f"👤 {x.get('name')} | {x.get('sub')} | {'🚫' if x.get('banned') else '✅'}" for x in all_u]
-            send_msg(cid, "👥 Участники:\n\n" + "\n".join(lines))
+            all_u = db.get_all_users(); total = len(all_u); send_msg(cid, f"📊 Всего: {total}")
         elif txt == "📢 Объявление":
             db.update_user(uid, step="admin_bc"); send_msg(cid, "Текст рассылки:")
         elif txt == "⬅️ В меню":
@@ -249,9 +313,10 @@ def handle_update(upd):
 
     if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
-        db.update_user(uid, lang=l, step="contact" if not u.get('phone') else "main")
-        if not u.get('phone'): send_msg(cid, TEXTS[l]['req_contact'], kb={"keyboard": [[{"text": TEXTS[l]['contact_btn'], "request_contact": True}]], "resize_keyboard": True})
-        else: send_msg(cid, TEXTS[l]['access_granted'], kb=get_main_kb(uid, l)); return
+        db.update_user(uid, lang=l, step="contact")
+        t_new = TEXTS[l]
+        send_msg(cid, t_new['welcome'])
+        send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True}); return
 
     if u['step'] == "agreement" and txt == t['agree_btn']:
         db.update_user(uid, step="main", agreed=1); send_msg(cid, t['access_granted'], kb=get_main_kb(uid, lang)); return
@@ -263,7 +328,7 @@ def handle_update(upd):
 
     if 'photo' in m and not is_owner:
         for oid in OWNER_IDS: send_photo(oid, m['photo'][-1]['file_id'], caption=f"📸 YANGI CHEK! ID: `{uid}`")
-        send_msg(cid, "✅ Чек получен! Ждите проверки."); return
+        send_msg(cid, "✅ Чек получен! Ждите подтверждения."); return
 
     if txt == t['courses_btn']:
         db.update_user(uid, step="cats"); items = [[{"text": v}] for v in t['categories'].values()]

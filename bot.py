@@ -35,8 +35,6 @@ if sys.platform == "win32":
 
 # КЛЮЧИ (Tokenlarni Render Environment Variables'dan oladi)
 TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
-PAYME_TOKEN = os.getenv("PAYME_TOKEN")
-CLICK_TOKEN = os.getenv("CLICK_TOKEN")
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 OWNER_IDS = ["1477103854"]  # Faqat Abdulaziz (Asosiy Admin)
 
@@ -426,7 +424,11 @@ def handle_update(upd):
     uid = None
     if 'callback_query' in upd: uid = str(upd['callback_query']['from']['id'])
     elif 'message' in upd: uid = str(upd['message']['from']['id'])
-    elif 'pre_checkout_query' in upd: uid = str(upd['pre_checkout_query']['from']['id'])
+
+    if 'callback_query' in upd:
+        cq = upd['callback_query']; cid = cq['message']['chat']['id']; uid = str(cq['from']['id']); data = cq['data']
+        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8'))
+        return
 
     # --- DDOS PROTECTION (Rate Limiting) ---
     if uid and uid not in OWNER_IDS:
@@ -485,19 +487,6 @@ def handle_update(upd):
             urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8'))
         return
 
-    if 'pre_checkout_query' in upd:
-        pq = upd['pre_checkout_query']
-        answer_pre_checkout(pq['id'])
-        return
-
-    if 'message' in upd and 'successful_payment' in upd['message']:
-        sp = upd['message']['successful_payment']; uid = str(upd['message']['from']['id'])
-        u = db.get_user(uid); tariff = sp['invoice_payload'].replace("sub_", "").capitalize()
-        db.add_payment(uid, sp['total_amount'] // 100, time.strftime('%Y-%m-%d %H:%M:%S'), u.get('phone', 'None'), tariff)
-        expire_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30 * 86400))
-        db.update_user(uid, sub=tariff.lower(), sub_expire=expire_date, unlocked=[], ai_count=0)
-        send_msg(uid, TEXTS.get(u.get('lang', 'ru'), TEXTS['ru'])['sub_activated'].format(tariff=tariff))
-        return
 
     if 'message' not in upd: return
     m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS)
@@ -562,9 +551,26 @@ def handle_update(upd):
                 send_msg(cid, "Ошибка доступа. Данная функция заблокирована в целях безопасности.")
                 return
     
-    # Photos are restricted for non-admins too
+    # Photos are restricted for non-admins too, unless it's a receipt
     if 'photo' in m and not is_owner:
-        send_msg(cid, "Ошибка доступа. Данная функция заблокирована в целях безопасности.")
+        photo_id = m['photo'][-1]['file_id']
+        uname = f"@{u.get('username')}" if u.get('username') else "username yo'q"
+        caption = (
+            f"📸 *YANGI CHEK KELDI!*\n\n"
+            f"👤 Foydalanuvchi: {u.get('name')} ({uname})\n"
+            f"🆔 ID: `{uid}`\n"
+            f"📱 Telefon: {u.get('phone')}\n"
+            f"💰 Status: To'lov cheki yuborildi."
+        )
+        for oid in OWNER_IDS:
+            send_photo(oid, photo_id, caption=caption)
+        
+        thanks_msg = {
+            'ru': "✅ Ваш чек получен! Админ проверит его и активирует доступ в ближайшее время.",
+            'uz': "✅ Chekingiz qabul qilindi! Admin uni tekshirib, tez orada ruxsat beradi.",
+            'en': "✅ Your receipt has been received! The admin will verify it and activate access shortly."
+        }
+        send_msg(cid, thanks_msg.get(lang, thanks_msg['ru']))
         return
 
     if txt:
@@ -811,8 +817,27 @@ def handle_update(upd):
         send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "🥉 Standard"}, {"text": "🥈 Platinum"}], [{"text": "🥇 VIP"}, {"text": t['back_btn']}]], "resize_keyboard": True})
         return
     elif txt in ["🥉 Standard", "🥈 Platinum", "🥇 VIP"]:
-        tk = txt.split()[1].lower(); kb = {"inline_keyboard": [[{"text": "Payme", "callback_data": f"pay_payme_{tk}"}], [{"text": "Click", "callback_data": f"pay_click_{tk}"}]]}
-        send_msg(cid, f"Payment: {txt}", kb=kb)
+        tk = txt.split()[1].lower()
+        amount = 60000 if tk=='standard' else (120000 if tk=='platinum' else 2000000)
+        card_info = (
+            "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n"
+            "💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n"
+            "💳 VISA: `4231 2000 7034 2356` (KAMOLOV A.)"
+        )
+        msg = f"{card_info}\n\n💰 Summa: {amount:,} UZS\n\n📸 To'lovni amalga oshirgach, chekni shu yerga yuboring. Admindan tasdiqlashni kutishingiz kerak bo'ladi."
+        send_msg(cid, msg.replace(",", " "))
+        
+        # Notify admin
+        uname = f"@{u.get('username')}" if u.get('username') else "username yo'q"
+        alert = (
+            f"🔔 *YANGI TO'LOV SO'ROVI!*\n\n"
+            f"👤 Foydalanuvchi: {u.get('name')} ({uname})\n"
+            f"🆔 ID: `{uid}`\n"
+            f"📱 Telefon: {u.get('phone')}\n"
+            f"💰 Tarif: {txt}"
+        )
+        for oid in OWNER_IDS: send_msg(oid, alert)
+        db.update_user(uid, step="awaiting_payment")
         return
     elif u['step'] == "ai_chat" and txt:
         # Check AI limit
@@ -825,8 +850,25 @@ def handle_update(upd):
                 'uz': f"❌ Siz ta'rifingiz uchun AI savollar limitini ({max_ai} ta) tugatdingiz. Iltimos, ta'rifni yangilang.",
                 'en': f"❌ You have reached your AI question limit ({max_ai}) for your current plan. Please upgrade."
             }
-            send_msg(cid, limit_msg.get(lang, limit_msg['ru']))
+            kb = {"keyboard": [[{"text": "➕ 100 savol (10,000 UZS)"}], [{"text": "➕ 200 savol (20,000 UZS)"}], [{"text": t['back_btn']}]], "resize_keyboard": True}
+            send_msg(cid, limit_msg.get(lang, limit_msg['ru']), kb=kb)
             return
+    
+    elif txt in ["➕ 100 savol (10,000 UZS)", "➕ 200 savol (20,000 UZS)"]:
+        amount = 10000 if "100" in txt else 20000
+        card_info = (
+            "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n"
+            "💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n"
+            "💳 VISA: `4231 2000 7034 2356` (KAMOLOV A.)"
+        )
+        msg = f"{card_info}\n\n💰 Summa: {amount:,} UZS\n\n📸 To'lovni amalga oshirgach, chekni shu yerga yuboring.".replace(",", " ")
+        send_msg(cid, msg)
+        
+        # Notify admin
+        uname = f"@{u.get('username')}" if u.get('username') else "username yo'q"
+        alert = f"🔔 *QO'SHIMCHA AI SAVOLLAR!*\n👤 {u.get('name')} ({uname})\n🆔 `{uid}`\n💰 {txt}"
+        for oid in OWNER_IDS: send_msg(oid, alert)
+        return
 
         # So'kinish detektori - barcha tillarda
         if detect_profanity(txt):
@@ -871,7 +913,13 @@ def handle_update(upd):
         cat = u['step'].split("_")[1]
         if txt in t['courses'].get(cat, []):
             if not is_owner and u['sub'] == 'none':
-                send_msg(cid, "❌ Bo'limga kirish uchun tarif sotib oling!")
+                no_sub_msg = {
+                    'ru': f"🔒 Для доступа к курсу *{txt}* необходим тариф!\n\n🥉 Standard — 60,000 сум\n🥈 Platinum — 120,000 сум\n🥇 VIP — 2,000,000 сум",
+                    'uz': f"🔒 *{txt}* kursiga kirish uchun tarif kerak!\n\n🥉 Standard — 60,000 so'm\n🥈 Platinum — 120,000 so'm\n🥇 VIP — 2,000,000 so'm",
+                    'en': f"🔒 A plan is required to access *{txt}*!\n\n🥉 Standard — 60,000 UZS\n🥈 Platinum — 120,000 UZS\n🥇 VIP — 2,000,000 UZS"
+                }
+                kb = {"keyboard": [[{"text": "🥉 Standard"}, {"text": "🥈 Platinum"}], [{"text": "🥇 VIP"}, {"text": t['back_btn']}]], "resize_keyboard": True}
+                send_msg(cid, no_sub_msg.get(lang, no_sub_msg['ru']), kb=kb)
             else:
                 unl = u.get('unlocked', [])
                 c_id = get_course_id(txt)

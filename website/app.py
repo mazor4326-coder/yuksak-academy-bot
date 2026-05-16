@@ -5,9 +5,10 @@ from flask import Flask, render_template, request, Response, send_from_directory
 
 app = Flask(__name__, static_folder='.', static_url_path='', template_folder='templates')
 
+import time
 ADMIN_USER = "aziz67876578"
 ADMIN_PASS = "67596854903876584"
-DB_PATH = r"C:\Users\Admin\Music\Kamolov.A. PROEKT YUKSAK AKADEMIYA\yuksak.db"
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "yuksak.db")
 
 def check_auth(username, password):
     return username == ADMIN_USER and password == ADMIN_PASS
@@ -73,7 +74,8 @@ def grant_access():
     
     conn = get_db_connection()
     if action in ['standard', 'platinum', 'vip']:
-        conn.execute("UPDATE users SET sub=? WHERE id=?", (action, user_id))
+        expire_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30 * 86400))
+        conn.execute("UPDATE users SET sub=?, sub_expire=?, unlocked='[]', ai_count=0 WHERE id=?", (action, expire_date, user_id))
     elif action == 'extra100':
         conn.execute("UPDATE users SET extra_ai = extra_ai + 100 WHERE id=?", (user_id,))
     elif action == 'extra200':

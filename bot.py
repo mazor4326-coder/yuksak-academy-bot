@@ -427,6 +427,43 @@ def handle_update(upd):
 
     if 'callback_query' in upd:
         cq = upd['callback_query']; cid = cq['message']['chat']['id']; uid = str(cq['from']['id']); data = cq['data']
+        u = db.get_user(uid)
+        
+        # --- ADMIN PAYMENT ACTIONS ---
+        if data.startswith("adm_pay_") and str(uid) in OWNER_IDS:
+            parts = data.split("_") # adm, pay, action, target_uid
+            action = parts[2]
+            target_uid = parts[3]
+            target_user = db.get_user(target_uid)
+            if not target_user:
+                urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id'], 'text': "Пользователь не найден"}).encode('utf-8'))
+                return
+            
+            tlang = target_user.get('lang', 'ru')
+            if action == "ok":
+                expire_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30 * 86400))
+                db.update_user(target_uid, sub='standard', sub_expire=expire_date, unlocked=[], ai_count=0, step='main')
+                ok_msg = {'ru': "✅ Ваш платеж подтвержден! Тариф Standard активирован.", 'uz': "✅ To'lovingiz tasdiqlandi! Standard tarifi faollashtirildi.", 'en': "✅ Your payment is confirmed! Standard plan activated."}
+                send_msg(target_uid, ok_msg.get(tlang, ok_msg['ru']))
+                send_msg(cid, f"✅ Доступ выдан пользователю {target_uid}")
+            elif action == "no":
+                db.update_user(target_uid, step='main')
+                no_msg = {'ru': "❌ Ваш платеж отклонен. Проверьте данные или свяжитесь с поддержкой.", 'uz': "❌ To'lovingiz rad etildi. Ma'lumotlarni tekshiring.", 'en': "❌ Your payment was rejected."}
+                send_msg(target_uid, no_msg.get(tlang, no_msg['ru']))
+                send_msg(cid, f"❌ Платеж {target_uid} отклонен")
+            elif action == "fake":
+                db.update_user(target_uid, banned=1, step='banned')
+                fake_msg = (
+                    "⚠️ *ВНИМАНИЕ / DIQQAT / ATTENTION*\n\n"
+                    "🇷🇺 Вы отправили фальшивый чек. По закону Узбекистана это называется мошенничеством. Ваш аккаунт заблокирован.\n\n"
+                    "🇺🇿 Siz soxta chek yubordingiz. O'zbekiston qonunchiligiga ko'ra bu firibgarlik deb ataladi. Hisobingiz bloklandi."
+                )
+                send_msg(target_uid, fake_msg)
+                send_msg(cid, f"🚫 Пользователь {target_uid} забанен за фейк")
+                
+            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8'))
+            return
+        
         urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8'))
         return
 
@@ -800,10 +837,74 @@ def handle_update(upd):
 
     if u['step'] == "admin_main" and is_owner and txt:
         if txt == "🔍 Проверка чеков":
-            admin_url = "https://yuksak-academy-bot.onrender.com/admin"
-            send_msg(cid, f"📑 *Проверка чеков*\n\nВсе новые оплаты и чеки проверяются в веб-панели:\n{admin_url}")
+            pending = []
+            all_users = db.get_all_users()
+            for pid, puser in all_users.items():
+                if puser.get('step') == 'awaiting_payment': pending.append(puser)
+            if not pending:
+                send_msg(cid, "✅ Новых чеков на проверку нет.")
+                return
+            send_msg(cid, f"📑 *Найдено чеков: {len(pending)}*")
+            for pu in pending[:10]:
+                puname = f"@{pu.get('username')}" if pu.get('username') else "нет"
+                txt_info = f"👤 {pu.get('name')} ({puname})\n📞 {pu.get('phone')}\n🆔 `{pu['id']}`"
+                kb = {"inline_keyboard": [[{"text": "✅ Принять", "callback_data": f"adm_pay_ok_{pu['id']}"}],[{"text": "❌ Отклонить", "callback_data": f"adm_pay_no_{pu['id']}"}],[{"text": "🚫 ФЕЙК", "callback_data": f"adm_pay_fake_{pu['id']}"}]]}
+                send_msg(cid, txt_info, kb=kb)
             return
         elif txt == "📊 Статистика":
+            users = db.get_all_users()
+            send_msg(cid, f"📊 *STATISTIKA:*\n\n👥 Azolar: {len(users)}\n💳 To'lovlar: {len(db.get_payments())}")
+            return
+        elif txt == "АТАКА":
+            logs = db.get_hacker_logs()
+            if not logs: send_msg(cid, "✅ Hujumlar aniqlanmadi."); return
+            txt_l = "🚨 *OXIRGI HUJUMLAR:*\n\n"
+            for l in logs[:5]: txt_l += f"👤 {l['name']} | 🆔 {l['user_id']}\n❌ {l['reason']}\n📝 {l['bad_text'][:30]}...\n\n"
+            send_msg(cid, txt_l)
+            return
+        elif txt == "АТАКА ДЕТАЛЬНАЯ":
+            logs = db.get_hacker_logs()
+            if not logs: send_msg(cid, "✅ Hujumlar aniqlanmadi."); return
+            for l in logs[:3]:
+                d = f"🚨 *DETAL:* {l['name']}\n🆔 `{l['user_id']}`\n👤 @{l['username']}\n📞 {l['phone']}\n📅 {l['timestamp']}\n❌ {l['reason']}\n📝 `{l['bad_text']}`"
+                send_msg(cid, d)
+            return
+        elif txt == "📈 Аналитика":
+            send_msg(cid, "📈 Аналитика пока доступна только в веб-панели.")
+            return
+        elif txt == "💰 Финансы":
+            pays = db.get_payments(); total = sum([p['amount'] for p in pays])
+            send_msg(cid, f"💰 *MOLIYA:*\n\n💵 Jami tushum: {total:,} UZS\n📈 To'lovlar soni: {len(pays)} ta".replace(",", " "))
+            return
+        elif txt == "👥 Участники":
+            users = db.get_all_users()
+            txt_u = f"👥 *FOYDALANUVCHILAR (Oxirgi 10):*\n\n"
+            for uid, user in list(users.items())[-10:]: txt_u += f"👤 {user.get('name')} | @{user.get('username')} | 💎 {user.get('sub')}\n"
+            send_msg(cid, txt_u)
+            return
+        elif txt == "🎬 Видео контент":
+            send_msg(cid, "Отправьте видео и описание для добавления в базу.")
+            db.update_user(uid, step="admin_video")
+            return
+        elif txt == "🤖 AI логи":
+            send_msg(cid, "🤖 AI логи пока доступны только в веб-панели.")
+            return
+        elif txt == "📢 Объявление":
+            send_msg(cid, "Отправьте текст объявления для рассылки всем пользователям.")
+            db.update_user(uid, step="admin_broadcast")
+            return
+        elif txt == "🔎 Поиск пользователя":
+            send_msg(cid, "🔎 ID, +998... yoki @username yuboring:")
+            db.update_user(uid, step="admin_search")
+            return
+        elif txt == "🔓 Разблокировать":
+            send_msg(cid, "🔓 Blokdan ochish uchun ID yuboring:")
+            db.update_user(uid, step="admin_unban")
+            return
+        elif txt == "⬅️ В меню":
+            db.update_user(uid, step="main")
+            send_msg(cid, "🏠 Главное меню", kb=get_main_kb(lang))
+            return
 
     if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')

@@ -9,7 +9,7 @@ load_dotenv()
 # Web server for Render
 app = Flask('')
 @app.route('/')
-def home(): return "Yuksak Academy Bot (Version 2.2 - ABSOLUTE FINAL) is running!"
+def home(): return "Yuksak Academy Bot (Version 2.2 - GUARANTEED) is running!"
 def run():
     try:
         port = int(os.environ.get("PORT", 10000))
@@ -95,7 +95,9 @@ TEXTS = {
         'subs_info': "💎 *ТАРИФЫ (на 1 месяц):*\n\n🥉 **Standard — 60,000 сум**\n(Доступ к 1 курсу на выбор + AI помощник 200 вопросов)\n\n🥈 **Platinum — 120,000 сум**\n(Доступ к 2 курсам на выбор + AI помощник 400 вопросов)\n\n🥇 **VIP — 2,000,000 сум**\n(Доступ КО ВСЕМ курсам навсегда + Личное наставничество + Безлимитный AI)",
         'ai_welcome': "🤖 Я ваш AI-помощник. Задавайте вопросы!",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование"},
-        'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]}
+        'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]},
+        'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
+        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     },
     'uz': {
         'choose_lang': "Tilni tanlang / Выберите язык / Choose language:",
@@ -110,7 +112,9 @@ TEXTS = {
         'subs_info': "💎 *TARIFLAR (1 oyga):*\n\n🥉 **Standard — 60,000 so'm**\n(1 ta kursga kirish + AI 200 ta savol)\n\n🥈 **Platinum — 120,000 so'm**\n(2 ta kursga kirish + AI 400 ta savol)\n\n🥇 **VIP — 2,000,000 so'm**\n(Barcha kurslar + Shaxsiy ustoz + Limitsiz AI)",
         'ai_welcome': "🤖 Men AI yordamchingizman. Savol bering!",
         'categories': {'prog': "💻 Dasturlash", 'design': "🎨 Dizayn", 'lang': "🌐 Tillar", '3d': "🏗️ 3D Modellashtirish"},
-        'courses': {'prog': ["🤖 Telegram botlar", "🌐 Saytlar"], 'design': ["AI orqali dizayn"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"]}
+        'courses': {'prog': ["🤖 Telegram botlar", "🌐 Saytlar"], 'design': ["AI orqali dizayn"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"]},
+        'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
+        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     },
     'en': {
         'choose_lang': "Choose language:",
@@ -125,7 +129,9 @@ TEXTS = {
         'subs_info': "💎 *PLANS (per month):*\n\n🥉 **Standard — 60,000 UZS**\n🥈 **Platinum — 120,000 UZS**\n🥇 **VIP — 2,000,000 UZS**",
         'ai_welcome': "🤖 I am your AI assistant.",
         'categories': {'prog': "💻 Programming", 'design': "🎨 Design", 'lang': "🌐 Languages", '3d': "🏗️ 3D Modeling"},
-        'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"]}
+        'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"]},
+        'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
+        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     }
 }
 
@@ -167,12 +173,10 @@ def get_ai_resp(prompt):
     try:
         data = json.dumps(payload).encode('utf-8')
         req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=15) as resp:
             res = json.loads(resp.read().decode('utf-8'))
             return res['candidates'][0]['content']['parts'][0]['text']
-    except Exception as e:
-        print(f"[ERROR] AI Request: {e}")
-        return "AI service busy."
+    except: return "AI xizmati hozircha band. / ИИ сервис временно занят."
 
 def get_main_kb(uid, lang):
     t = TEXTS.get(lang, TEXTS['ru'])
@@ -181,76 +185,46 @@ def get_main_kb(uid, lang):
     return {"keyboard": rows, "resize_keyboard": True}
 
 def handle_update(upd):
-    cid = None; uid = None; txt = None
     if 'callback_query' in upd:
         cq = upd['callback_query']; cid = cq['message']['chat']['id']; uid = str(cq['from']['id']); data = cq['data']
         if data.startswith("adm_pay_") and str(uid) in OWNER_IDS:
             _, _, action, target_uid = data.split("_")
-            target_user = db.get_user(target_uid)
-            if target_user:
-                if action == "ok":
-                    exp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30*86400))
-                    db.update_user(target_uid, sub='standard', sub_expire=exp, unlocked=[], ai_count=0, step='main')
-                    send_msg(target_uid, "✅ Платеж принят!"); send_msg(cid, f"✅ OK: {target_uid}")
-                elif action == "no":
-                    db.update_user(target_uid, step='main')
-                    send_msg(target_uid, "❌ Платеж отклонен."); send_msg(cid, f"❌ NO: {target_uid}")
-                elif action == "fake":
-                    db.update_user(target_uid, banned=1, step='banned')
-                    send_msg(target_uid, "🚫 БАН за фейк!"); send_msg(cid, f"🚫 BANNED: {target_uid}")
-            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8')); return
-        return
+            if action == "ok":
+                exp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30*86400))
+                db.update_user(target_uid, sub='standard', sub_expire=exp, unlocked=[], ai_count=0, step='main')
+                send_msg(target_uid, "✅ To'lov qabul qilindi!"); send_msg(cid, f"✅ OK: {target_uid}")
+            elif action == "no": db.update_user(target_uid, step='main'); send_msg(target_uid, "❌ To'lov rad etildi."); send_msg(cid, f"❌ NO: {target_uid}")
+            elif action == "fake": db.update_user(target_uid, banned=1); send_msg(target_uid, "🚫 FAKE uchun BAN!"); send_msg(cid, f"🚫 BANNED: {target_uid}")
+        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8')); return
 
     if 'message' not in upd: return
     m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS); txt = m.get('text', '').strip()
     u = db.get_user(uid)
     if not u: db.create_user(uid, m['from'].get('first_name','User'), m['from'].get('username','None')); u = db.get_user(uid)
-    print(f"[LOG] User {uid} in step {u['step']} sent: {txt}")
-    
+    print(f"[LOG] {uid} | {u['step']} | {txt}")
+
     if u.get('banned'): send_msg(cid, "🚫 BAN!"); return
     lang = u.get('lang', 'ru'); t = TEXTS.get(lang, TEXTS['ru'])
 
-    if txt == '/reset':
-        db.update_user(uid, step="lang", agreed=0, lang=None, phone=None)
-        send_msg(cid, "🔄 Profile reset. Use /start"); return
+    if txt == '/reset': db.update_user(uid, step="lang", agreed=0, lang=None, phone=None); send_msg(cid, "🔄 Reset!"); return
+    if txt == '/version': send_msg(cid, "🤖 Version 2.2 (Absolute Final)"); return
 
     if 'contact' in m:
         db.update_user(uid, phone=m['contact']['phone_number'], step="agreement")
         send_msg(cid, t['thanks']); send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True}); return
 
     if txt:
-        if txt == '/version':
-            send_msg(cid, "🤖 Version 2.2 (Absolute Final Restoration)"); return
-        if any(txt == TEXTS[l]['support_btn'] for l in TEXTS):
-            support_info = (
-                "📞 *ТЕХНИЧЕСКАЯ ПОДДЕРЖКА:*\n\n"
-                "Если у вас возникли вопросы по работе платформы или оплате, свяжитесь с нами:\n\n"
-                "🔹 **Telegram:** @yuksak_it\n"
-                "🔹 **Телефон:** +998 50 777 51 52\n\n"
-                "🕒 **График работы:**\n"
-                "Ежедневно с 09:00 до 20:00."
-            )
-            send_msg(cid, support_info); return
-        if any(txt == TEXTS[l]['founder_btn'] for l in TEXTS):
-            founder_bio = (
-                "👨‍💼 *ОСНОВАТЕЛЬ YUKSAK ACADEMY:*\n\n"
-                "**Kamolov Abdulaziz Sherzodbekovich**\n\n"
-                "Предприниматель, IT-специалист и основатель образовательной платформы Yuksak Academy. "
-                "Моя цель — сделать качественное IT-образование доступным для каждого жителя Узбекистана. "
-                "Мы собрали лучшие курсы и внедрили ИИ-технологии, чтобы ваше обучение было максимально эффективным.\n\n"
-                "🔗 Связь: @kamolov_it"
-            )
-            send_msg(cid, founder_bio); return
-        if any(txt == TEXTS[l]['back_btn'] for l in TEXTS):
-            db.update_user(uid, step="main"); send_msg(cid, "🏠", kb=get_main_kb(uid, lang)); return
+        if any(txt == TEXTS[l]['support_btn'] for l in TEXTS): send_msg(cid, t['support_txt']); return
+        if any(txt == TEXTS[l]['founder_btn'] for l in TEXTS): send_msg(cid, t['founder_txt']); return
+        if any(txt == TEXTS[l]['back_btn'] for l in TEXTS): db.update_user(uid, step="main"); send_msg(cid, "🏠", kb=get_main_kb(uid, lang)); return
 
     if txt == '/start':
         db.update_user(uid, lang=None, step="lang")
-        send_msg(cid, "🇺🇿 Tilni tanlang / 🇷🇺 Выберите язык:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
+        send_msg(cid, "Tilni tanlang / Выберите язык:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
 
     if txt == "🔍 Проверка чеков" and is_owner:
         pending = [pu for pu in db.get_all_users().values() if pu.get('step') == 'awaiting_payment']
-        if not pending: send_msg(cid, "✅ Нет чеков."); return
+        if not pending: send_msg(cid, "✅ Bo'sh."); return
         for pu in pending[:5]:
             kb = {"inline_keyboard": [[{"text": "✅ OK", "callback_data": f"adm_pay_ok_{pu['id']}"}, {"text": "❌ NO", "callback_data": f"adm_pay_no_{pu['id']}"}, {"text": "🚫 FAKE", "callback_data": f"adm_pay_fake_{pu['id']}"}]]}
             send_msg(cid, f"👤 {pu['name']}\n🆔 `{pu['id']}`", kb=kb)
@@ -258,64 +232,55 @@ def handle_update(upd):
 
     if (txt == '/admin' or txt.lower() in ['admin', 'админ']) and is_owner:
         db.update_user(uid, step="admin_main")
-        kb = [[{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}], [{"text": "АТАКА"}, {"text": "АТАКА ДЕТАЛЬНАЯ"}], [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}], [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}], [{"text": "🤖 AI логи"}, {"text": "📢 Объявление"}], [{"text": "🔎 Поиск пользователя"}, {"text": "🔓 Разблокировать"}, {"text": "⬅️ В меню"}]]
+        kb = [[{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}], [{"text": "💰 Финансы"}, {"text": "📢 Объявление"}], [{"text": "⬅️ В меню"}]]
         send_msg(cid, "🛠 Admin Panel", kb={"keyboard": kb, "resize_keyboard": True}); return
 
     if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
         db.update_user(uid, lang=l, step="contact")
-        t_new = TEXTS[l]
-        send_msg(cid, t_new['welcome'])
-        send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True}); return
+        send_msg(cid, TEXTS[l]['welcome']); send_msg(cid, TEXTS[l]['req_contact'], kb={"keyboard": [[{"text": TEXTS[l]['contact_btn'], "request_contact": True}]], "resize_keyboard": True}); return
 
-    # REGISTRATION - AGREEMENT
     if u['step'] == "agreement":
-        normalized_txt = txt.lower().replace("✅", "").strip()
-        if "roziman" in normalized_txt or "согласен" in normalized_txt or "agree" in normalized_txt or txt == t['agree_btn']:
-            db.update_user(uid, step="main", agreed=1)
-            send_msg(cid, t['access_granted'], kb=get_main_kb(uid, lang))
-            return
+        if "roziman" in txt.lower() or "согласен" in txt.lower() or txt == t['agree_btn']:
+            db.update_user(uid, step="main", agreed=1); send_msg(cid, t['access_granted'], kb=get_main_kb(uid, lang)); return
 
     if txt == t['subs_btn']:
         db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "subs" and txt in ["Standard", "Platinum", "VIP"]:
-        card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n💳 VISA: `4231 2000 7034 2356` (KAMOLOV A.)"
-        send_msg(cid, f"{card}\n\n📸 Отправьте чек после оплаты."); db.update_user(uid, step="awaiting_payment"); return
+        card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)"
+        send_msg(cid, f"{card}\n\n📸 To'lov chekini yuboring."); db.update_user(uid, step="awaiting_payment"); return
+
+    if 'photo' in m and not is_owner:
+        for oid in OWNER_IDS: send_photo(oid, m['photo'][-1]['file_id'], caption=f"📸 YANGI CHEK! ID: `{uid}`")
+        send_msg(cid, "✅ Qabul qilindi!"); return
 
     if txt == t['ai_btn']:
-        db.update_user(uid, step="ai_chat")
-        send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+        db.update_user(uid, step="ai_chat"); send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "ai_chat" and txt:
-        send_msg(cid, "🤖..."); resp = get_ai_resp(txt); send_msg(cid, resp); return
+        resp = get_ai_resp(txt); send_msg(cid, resp); return
 
     if txt == t['courses_btn']:
-        db.update_user(uid, step="cats")
-        items = [{"text": v} for v in t['categories'].values()]
+        db.update_user(uid, step="cats"); items = [{"text": v} for v in t['categories'].values()]
         send_msg(cid, "Category:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
 
     if u['step'] == "cats" and any(txt == v for v in t['categories'].values()):
         cat_id = [k for k, v in t['categories'].items() if v == txt][0]
-        db.update_user(uid, step=f"c_{cat_id}")
-        items = [{"text": c} for c in t['courses'][cat_id]]
+        db.update_user(uid, step=f"c_{cat_id}"); items = [{"text": c} for c in t['courses'][cat_id]]
         send_msg(cid, f"{txt}:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
 
     if u['step'].startswith("c_") and txt:
         cat = u['step'].split("_")[1]
         if txt in t['courses'].get(cat, []):
-            if not is_owner and u['sub'] == 'none':
-                send_msg(cid, "🔒 Купите тариф!"); return
-            db.update_user(uid, step=f"lessons||{txt}")
-            c_id = get_course_id(txt); data = db.get_courses().get(c_id, [])
+            if not is_owner and u['sub'] == 'none': send_msg(cid, "🔒 To'lov qiling!"); return
+            db.update_user(uid, step=f"lessons||{txt}"); c_id = get_course_id(txt); data = db.get_courses().get(c_id, [])
             items = [{"text": f"Qism {i+1}"} for i in range(len(data))]
             send_msg(cid, f"Курс: {txt}", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
 
     if u['step'].startswith("lessons||") and txt:
-        course_name = u['step'].split("||")[1]
-        c_id = get_course_id(course_name); data = db.get_courses().get(c_id, [])
+        course_name = u['step'].split("||")[1]; c_id = get_course_id(course_name); data = db.get_courses().get(c_id, [])
         try:
             pnum = int(txt.split()[-1])
-            if 1 <= pnum <= len(data):
-                v = data[pnum-1]; send_vid(cid, v['video'], v.get('caption'))
+            if 1 <= pnum <= len(data): v = data[pnum-1]; send_vid(cid, v['video'], v.get('caption'))
         except: pass
 
 def main():

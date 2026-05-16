@@ -144,7 +144,7 @@ TEXTS = {
         'req_contact': "Ro'yxatdan o'tish uchun telefon raqamingizni yuboring.",
         'contact_btn': "📱 Kontaktni yuborish",
         'thanks': "Raqamingiz ro'yxatga olindi. Qoidalar bilan tanishib chiqing va 'Roziman' tugmasini bosing.",
-        'agreement': "⚠️ *YUKSAK ACADEMY QOIDALARI:*\n\n1. **Maxfiylik:** Videolarni ko'chirish yoki tarqatish taqiqlanadi. Barcha huquqlar himoyalangan.\n2. **AI Yordamchi:** So'kinish va o'rinsiz gaplar taqiqlanadi. Faqat ta'lim uchun.\n3. **Xavfsizlik:** Tizimni buzishga urinish bloklanishga sabab bo'ladi.\n4. **Hurmat:** O'zaro hurmat majburiy.\n5. **Hisoblar:** Bir kishi uchun bitta profil.\n6. **To'lov:** Kursga kirish ruxsati berilgach, pul qaytarilmaydi.\n7. **Yangilanish:** Akademiya qoidalarni o'zgartirish huquqiga ega.\n\nQoidalarni qabul qilasizmi?",
+        'agreement': "⚠️ YUKSAK ACADEMY QOIDALARI:\n\n1. Maxfiylik: Videolarni ko'chirish yoki tarqatish taqiqlanadi. Barcha huquqlar himoyalangan.\n2. AI Yordamchi: So'kinish va o'rinsiz gaplar taqiqlanadi. Faqat ta'lim uchun.\n3. Xavfsizlik: Tizimni buzishga urinish bloklanishga sabab bo'ladi.\n4. Hurmat: O'zaro hurmat majburiy.\n5. Hisoblar: Bir kishi uchun bitta profil.\n6. To'lov: Kursga kirish ruxsati berilgach, pul qaytarilmaydi.\n7. Yangilanish: Akademiya qoidalarni o'zgartirish huquqiga ega.\n\nQoidalarni qabul qilasizmi?",
         'agree_btn': "✅ Roziman",
         'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Tex. yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga",
         'access_granted': "Platformadan foydalanishingiz mumkin.",

@@ -56,6 +56,57 @@
         </div>
 
         <div class="data-section">
+            <h3>🆕 Проверка чеков (Ожидают подтверждения)</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя</th>
+                            <th>Телефон</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set pending = false %}
+                        {% for u in users %}
+                            {% if u.step == 'awaiting_payment' %}
+                            {% set pending = true %}
+                            <tr>
+                                <td>{{ u.id }}</td>
+                                <td>{{ u.name }}</td>
+                                <td>{{ u.phone or '-' }}</td>
+                                <td><span class="badge" style="background: rgba(255, 170, 0, 0.2); color: #ffaa00;">ОЖИДАЕТ</span></td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <form action="/grant_access" method="POST">
+                                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                                            <input type="hidden" name="action" value="standard"> <!-- По умолчанию Standard, можно поменять в базе -->
+                                            <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #55ff55; border-color: #55ff55;">✅ Принять</button>
+                                        </form>
+                                        <form action="/reject_payment" method="POST">
+                                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                                            <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ffaa00; border-color: #ffaa00;">❌ Отклонить</button>
+                                        </form>
+                                        <form action="/fake_payment" method="POST">
+                                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                                            <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ff3333; border-color: #ff3333;">🚫 Фейк</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                        {% if not pending %}
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Новых чеков на проверку нет.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="data-section">
             <h3>🛡️ Последние попытки взлома (Total Security)</h3>
             {% if hacker_logs %}
                 {% for log in hacker_logs %}

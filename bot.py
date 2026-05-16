@@ -415,8 +415,8 @@ def handle_update(upd):
         db.update_user(uid, step="main", agreed=1); send_msg(cid, t['access_granted'], kb=get_main_kb(uid, lang)); return
 
     if txt == t['subs_btn']:
-        db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
-    elif u['step'] == "subs" and txt in ["Standard", "Platinum"]:
+        db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
+    elif u['step'] == "subs" and txt in ["Standard", "Platinum", "VIP"]:
         card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n💳 VISA: `4231 2000 7034 2356` (KAMOLOV A.)"
         send_msg(cid, f"{card}\n\n📸 Отправьте чек после оплаты."); db.update_user(uid, step="awaiting_payment")
         for oid in OWNER_IDS: send_msg(oid, f"🔔 ЗАПРОС ТАРИФА: {u.get('name')} (ID: {uid})"); return

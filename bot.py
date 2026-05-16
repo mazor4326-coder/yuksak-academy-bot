@@ -3,42 +3,30 @@ from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from flask import Flask
 
-# Load .env file if it exists (for local testing)
+# Load .env file
 load_dotenv()
 
 # Web server for Render
 app = Flask('')
-
 @app.route('/')
-def home():
-    return "Yuksak Academy Bot is running!"
-
+def home(): return "Yuksak Academy Bot (Version 2.0 - FULL VIP) is running!"
 def run():
     try:
-        # Render odatda 10000 portni ishlatadi
         port = int(os.environ.get("PORT", 10000))
-        print(f"[*] Render uchun Web-server {port}-portda ochilmoqda...", flush=True)
         app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
-    except Exception as e:
-        print(f"[!] Web-serverni ishga tushirishda xato: {e}", flush=True)
-
+    except: pass
 def keep_alive():
-    print("[*] keep_alive() ishga tushdi, thread yaratilmoqda...", flush=True)
-    t = threading.Thread(target=run, daemon=True)
-    t.start()
-    print("[*] Web-server thready yuborildi.", flush=True)
+    threading.Thread(target=run, daemon=True).start()
 
-# Настройка кодировки
 if sys.platform == "win32":
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-# КЛЮЧИ (Tokenlarni Render Environment Variables'dan oladi)
 TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
-OWNER_IDS = ["1477103854"]  # Faqat Abdulaziz (Asosiy Admin)
+OWNER_IDS = ["1477103854"]
 
-# УГРОЗЫ
+# SECURITY
 HACK_PATTERNS = {
     "Admin Access": ["/root", "/db", "drop table", "union select"],
     "Jailbreak": ["ignore previous", "игнорируй", "забудь", "new rules", "prompt injection", "system instructions", "internal prompt"],
@@ -46,8 +34,6 @@ HACK_PATTERNS = {
     "Injections": ["<script>", "javascript:", "eval(", "drop table", "union select"],
     "Social Engineering": ["я твой создатель", "i am your creator", "разреши мне", "allow me", "я твой разработчик", "i am your developer"]
 }
-
-# SO'KINISH DETEKTORI (RU + UZ Kirill + UZ Latin)
 BAD_WORDS = ["бля", "блять", "блядь", "сука", "пизда", "пиздец", "хуй", "хуйня", "ебать", "ёбаный", "еблан", "мудак", "мудила", "залупа", "пиздун", "ёб", "еб", "ёбт", "нахуй", "похуй", "пиздато", "хуйло", "пиздёж", "гандон", "долбоёб", "шлюха", "orospu", "sikib", "sik", "sikin", "harom", "jallob"]
 
 def detect_profanity(text):
@@ -66,19 +52,16 @@ def detect_attack(text):
     return None
 
 DB_NAME = "yuksak.db"
-
 class Database:
     def __init__(self, db_name):
         self.db_name = db_name
         self.lock = threading.Lock()
         self.init_db()
-
     def get_conn(self):
         conn = sqlite3.connect(self.db_name); conn.row_factory = sqlite3.Row; return conn
-
     def init_db(self):
         with self.lock:
-            conn = self.get_conn(); curr = conn.cursor()
+            c = self.get_conn(); curr = c.cursor()
             curr.execute("""CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY, name TEXT, username TEXT, phone TEXT, step TEXT, sub TEXT DEFAULT 'none',
                 ai_count INTEGER DEFAULT 0, violations INTEGER DEFAULT 0, banned BOOLEAN DEFAULT 0,
@@ -90,75 +73,38 @@ class Database:
             curr.execute("CREATE TABLE IF NOT EXISTS hacker_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, username TEXT, phone TEXT, bad_text TEXT, reason TEXT, timestamp TEXT)")
             curr.execute("CREATE TABLE IF NOT EXISTS interests (category TEXT PRIMARY KEY, user_ids TEXT DEFAULT '[]')")
             curr.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
-            conn.commit(); conn.close()
-
+            c.commit(); c.close()
     def get_user(self, uid):
         c = self.get_conn(); r = c.execute("SELECT * FROM users WHERE id=?", (str(uid),)).fetchone(); c.close()
         if r:
             u = dict(r); u['unlocked'] = json.loads(u['unlocked']); u['ai_history'] = json.loads(u['ai_history'])
             u['violation_history'] = json.loads(u['violation_history']); return u
         return None
-
     def update_user(self, uid, **kw):
         for k in ['unlocked', 'ai_history', 'violation_history']:
             if k in kw: kw[k] = json.dumps(kw[k])
         cols = ", ".join([f"{k}=?" for k in kw.keys()]); vals = list(kw.values()) + [str(uid)]
         with self.lock:
             c = self.get_conn(); c.execute(f"UPDATE users SET {cols} WHERE id=?", vals); c.commit(); c.close()
-
     def create_user(self, uid, n, un):
         with self.lock:
             c = self.get_conn(); c.execute("INSERT OR IGNORE INTO users (id, name, username, step) VALUES (?,?,?, 'lang')", (str(uid), n, un)); c.commit(); c.close()
-
     def get_all_users(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM users").fetchall(); c.close(); res = {}
         for r in rows:
             u = dict(r); u['unlocked'] = json.loads(u['unlocked']); u['ai_history'] = json.loads(u['ai_history'])
             u['violation_history'] = json.loads(u['violation_history']); res[r['id']] = u
         return res
-
     def get_courses(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM courses").fetchall(); c.close()
         return {r['name']: json.loads(r['data']) for r in rows}
-
     def update_course(self, n, d):
         with self.lock:
             c = self.get_conn(); c.execute("INSERT OR REPLACE INTO courses (name, data) VALUES (?,?)", (n, json.dumps(d))); c.commit(); c.close()
-
-    def add_payment(self, uid, a, d, p, t):
-        with self.lock:
-            c = self.get_conn(); c.execute("INSERT INTO payments (user_id, amount, date, phone, tariff) VALUES (?,?,?,?,?)", (str(uid), a, d, p, t)); c.commit(); c.close()
-
     def get_payments(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM payments").fetchall(); c.close(); return [dict(r) for r in rows]
-
-    def add_hacker_log(self, uid, n, un, p, txt, reas):
-        ts = time.strftime('%Y-%m-%d %H:%M:%S')
-        with self.lock:
-            c = self.get_conn(); c.execute("INSERT INTO hacker_logs (user_id, name, username, phone, bad_text, reason, timestamp) VALUES (?,?,?,?,?,?,?)", (str(uid), n, un, p, txt, reas, ts)); c.commit(); c.close()
-
     def get_hacker_logs(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM hacker_logs ORDER BY id DESC LIMIT 50").fetchall(); c.close(); return [dict(r) for r in rows]
-
-    def update_interest(self, cat, uid):
-        with self.lock:
-            c = self.get_conn(); r = c.execute("SELECT user_ids FROM interests WHERE category=?", (cat,)).fetchone()
-            uids = json.loads(r['user_ids']) if r else []
-            if uid not in uids:
-                uids.append(uid); c.execute("INSERT OR REPLACE INTO interests (category, user_ids) VALUES (?,?)", (cat, json.dumps(uids))); c.commit()
-            c.close()
-
-    def get_interests_all(self):
-        c = self.get_conn(); rows = c.execute("SELECT * FROM interests").fetchall(); c.close()
-        return {r['category']: json.loads(r['user_ids']) for r in rows}
-
-    def get_setting(self, key):
-        c = self.get_conn(); r = c.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone(); c.close()
-        return r['value'] if r else None
-
-    def set_setting(self, key, value):
-        with self.lock:
-            c = self.get_conn(); c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?,?)", (key, value)); c.commit(); c.close()
 
 db = Database(DB_NAME)
 
@@ -177,8 +123,7 @@ TEXTS = {
         'ai_welcome': "🤖 Я ваш AI-помощник. Задавайте вопросы!",
         'user_banned': "🚫 ВЫ ЗАБЛОКИРОВАНЫ.",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование"},
-        'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]},
-        'course_info': "Курс: {course}."
+        'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]}
     },
     'uz': {
         'choose_lang': "Tilni tanlang / Выберите язык / Choose language:",
@@ -301,6 +246,8 @@ def handle_update(upd):
         send_msg(cid, t['thanks']); send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True}); return
 
     if txt:
+        if txt == '/version':
+            send_msg(cid, "🤖 *Yuksak Academy Bot*\nVersion 2.0 - FULL VIP\nStatus: Online"); return
         if any(txt == TEXTS[l]['support_btn'] for l in TEXTS):
             send_msg(cid, "📞 *ТЕХНИЧЕСКАЯ ПОДДЕРЖКА:*\n\nTelegram: @yuksak_it\nТелефон: +998 50 777 51 52\nГрафик: 09:00 - 20:00"); return
         if any(txt == TEXTS[l]['founder_btn'] for l in TEXTS):
@@ -347,7 +294,7 @@ def handle_update(upd):
 
     if txt == '/start':
         db.update_user(uid, lang=None, step="lang")
-        send_msg(cid, "🇺🇿 Tilni tanlang / 🇷🇺 Выберите язык / 🇺🇸 Choose language:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
+        send_msg(cid, "Tilni tanlang / Выберите язык / Choose language:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
 
     if txt == "🔍 Проверка чеков" and is_owner:
         pending = [pu for pu in db.get_all_users().values() if pu.get('step') == 'awaiting_payment']
@@ -369,22 +316,9 @@ def handle_update(upd):
             all_u = db.get_all_users()
             send_msg(cid, f"📊 Всего: {len(all_u)}\n💎 Подписки: {len([x for x in all_u.values() if x['sub']!='none'])}")
             return
-        elif txt == "АТАКА":
-            logs = db.get_hacker_logs()
-            if not logs: send_msg(cid, "✅ Чисто."); return
-            txt_l = "🚨 АТАКИ:\n\n"
-            for l in logs[:5]: txt_l += f"👤 {l['name']} | ID: {l['user_id']}\n❌ {l['reason']}\n\n"
-            send_msg(cid, txt_l)
-            return
         elif txt == "💰 Финансы":
             pays = db.get_payments(); total = sum([p['amount'] for p in pays])
             send_msg(cid, f"💰 Всего: {total:,} UZS")
-            return
-        elif txt == "👥 Участники":
-            users = db.get_all_users()
-            txt_u = f"👥 Участники (Последние 10):\n\n"
-            for uid_u, user in list(users.items())[-10:]: txt_u += f"👤 {user.get('name')} | @{user.get('username')} | 💎 {user.get('sub')}\n"
-            send_msg(cid, txt_u)
             return
         elif txt == "📢 Объявление":
             db.update_user(uid, step="admin_broadcast")

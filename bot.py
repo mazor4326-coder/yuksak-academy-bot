@@ -9,7 +9,7 @@ load_dotenv()
 # Web server for Render
 app = Flask('')
 @app.route('/')
-def home(): return "Yuksak Academy Bot (Version 2.1 - ROBUST) is running!"
+def home(): return "Yuksak Academy Bot (Version 2.2 - ABSOLUTE FINAL) is running!"
 def run():
     try:
         port = int(os.environ.get("PORT", 10000))
@@ -170,7 +170,9 @@ def get_ai_resp(prompt):
         with urllib.request.urlopen(req, timeout=10) as resp:
             res = json.loads(resp.read().decode('utf-8'))
             return res['candidates'][0]['content']['parts'][0]['text']
-    except: return "AI service busy."
+    except Exception as e:
+        print(f"[ERROR] AI Request: {e}")
+        return "AI service busy."
 
 def get_main_kb(uid, lang):
     t = TEXTS.get(lang, TEXTS['ru'])
@@ -218,11 +220,26 @@ def handle_update(upd):
 
     if txt:
         if txt == '/version':
-            send_msg(cid, "🤖 Version 2.1 (Robust Registration)"); return
+            send_msg(cid, "🤖 Version 2.2 (Absolute Final Restoration)"); return
         if any(txt == TEXTS[l]['support_btn'] for l in TEXTS):
-            send_msg(cid, "📞 *ТЕХНИЧЕСКАЯ ПОДДЕРЖКА:*\n\n@yuksak_it | +998 50 777 51 52"); return
+            support_info = (
+                "📞 *ТЕХНИЧЕСКАЯ ПОДДЕРЖКА:*\n\n"
+                "Если у вас возникли вопросы по работе платформы или оплате, свяжитесь с нами:\n\n"
+                "🔹 **Telegram:** @yuksak_it\n"
+                "🔹 **Телефон:** +998 50 777 51 52\n\n"
+                "🕒 **График работы:**\n"
+                "Ежедневно с 09:00 до 20:00."
+            )
+            send_msg(cid, support_info); return
         if any(txt == TEXTS[l]['founder_btn'] for l in TEXTS):
-            founder_bio = "👨‍💼 *ОСНОВАТЕЛЬ YUKSAK ACADEMY:*\n\nKamolov Abdulaziz Sherzodbekovich\n@kamolov_it"
+            founder_bio = (
+                "👨‍💼 *ОСНОВАТЕЛЬ YUKSAK ACADEMY:*\n\n"
+                "**Kamolov Abdulaziz Sherzodbekovich**\n\n"
+                "Предприниматель, IT-специалист и основатель образовательной платформы Yuksak Academy. "
+                "Моя цель — сделать качественное IT-образование доступным для каждого жителя Узбекистана. "
+                "Мы собрали лучшие курсы и внедрили ИИ-технологии, чтобы ваше обучение было максимально эффективным.\n\n"
+                "🔗 Связь: @kamolov_it"
+            )
             send_msg(cid, founder_bio); return
         if any(txt == TEXTS[l]['back_btn'] for l in TEXTS):
             db.update_user(uid, step="main"); send_msg(cid, "🏠", kb=get_main_kb(uid, lang)); return
@@ -251,7 +268,7 @@ def handle_update(upd):
         send_msg(cid, t_new['welcome'])
         send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True}); return
 
-    # REGISTRATION - AGREEMENT (Robust check)
+    # REGISTRATION - AGREEMENT
     if u['step'] == "agreement":
         normalized_txt = txt.lower().replace("✅", "").strip()
         if "roziman" in normalized_txt or "согласен" in normalized_txt or "agree" in normalized_txt or txt == t['agree_btn']:
@@ -262,11 +279,8 @@ def handle_update(upd):
     if txt == t['subs_btn']:
         db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "subs" and txt in ["Standard", "Platinum", "VIP"]:
-        send_msg(cid, "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n\n📸 Отправьте чек."); db.update_user(uid, step="awaiting_payment"); return
-
-    if 'photo' in m and not is_owner:
-        for oid in OWNER_IDS: send_photo(oid, m['photo'][-1]['file_id'], caption=f"📸 YANGI CHEK! ID: `{uid}`")
-        send_msg(cid, "✅ Чек получен! Ждите подтверждения."); return
+        card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n💳 VISA: `4231 2000 7034 2356` (KAMOLOV A.)"
+        send_msg(cid, f"{card}\n\n📸 Отправьте чек после оплаты."); db.update_user(uid, step="awaiting_payment"); return
 
     if txt == t['ai_btn']:
         db.update_user(uid, step="ai_chat")

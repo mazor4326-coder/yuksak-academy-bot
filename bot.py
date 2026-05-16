@@ -9,7 +9,7 @@ load_dotenv()
 # Web server for Render
 app = Flask('')
 @app.route('/')
-def home(): return "Yuksak Academy Bot (Version 2.0 - FULL VIP) is running!"
+def home(): return "Yuksak Academy Bot (Version 2.1 - ROBUST) is running!"
 def run():
     try:
         port = int(os.environ.get("PORT", 10000))
@@ -26,31 +26,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 OWNER_IDS = ["1477103854"]
 
-# SECURITY
-HACK_PATTERNS = {
-    "Admin Access": ["/root", "/db", "drop table", "union select"],
-    "Jailbreak": ["ignore previous", "игнорируй", "забудь", "new rules", "prompt injection", "system instructions", "internal prompt"],
-    "Keys": ["password", "пароль", "admin key", "token", "api key"],
-    "Injections": ["<script>", "javascript:", "eval(", "drop table", "union select"],
-    "Social Engineering": ["я твой создатель", "i am your creator", "разреши мне", "allow me", "я твой разработчик", "i am your developer"]
-}
-BAD_WORDS = ["бля", "блять", "блядь", "сука", "пизда", "пиздец", "хуй", "хуйня", "ебать", "ёбаный", "еблан", "мудак", "мудила", "залупа", "пиздун", "ёб", "еб", "ёбт", "нахуй", "похуй", "пиздато", "хуйло", "пиздёж", "гандон", "долбоёб", "шлюха", "orospu", "sikib", "sik", "sikin", "harom", "jallob"]
-
-def detect_profanity(text):
-    if not text: return False
-    t = text.lower()
-    for w in BAD_WORDS:
-        if re.search(rf'\b{re.escape(w)}\b', t): return True
-    return False
-
-def detect_attack(text):
-    if not text: return None
-    t = text.lower()
-    for reason, patterns in HACK_PATTERNS.items():
-        for p in patterns:
-            if p in t: return reason
-    return None
-
+# DATABASE
 DB_NAME = "yuksak.db"
 class Database:
     def __init__(self, db_name):
@@ -98,9 +74,6 @@ class Database:
     def get_courses(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM courses").fetchall(); c.close()
         return {r['name']: json.loads(r['data']) for r in rows}
-    def update_course(self, n, d):
-        with self.lock:
-            c = self.get_conn(); c.execute("INSERT OR REPLACE INTO courses (name, data) VALUES (?,?)", (n, json.dumps(d))); c.commit(); c.close()
     def get_payments(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM payments").fetchall(); c.close(); return [dict(r) for r in rows]
     def get_hacker_logs(self):
@@ -121,7 +94,6 @@ TEXTS = {
         'access_granted': "Отлично! Вам доступны разделы платформы.",
         'subs_info': "💎 *ТАРИФЫ (на 1 месяц):*\n\n🥉 **Standard — 60,000 сум**\n(Доступ к 1 курсу на выбор + AI помощник 200 вопросов)\n\n🥈 **Platinum — 120,000 сум**\n(Доступ к 2 курсам на выбор + AI помощник 400 вопросов)\n\n🥇 **VIP — 2,000,000 сум**\n(Доступ КО ВСЕМ курсам навсегда + Личное наставничество + Безлимитный AI)",
         'ai_welcome': "🤖 Я ваш AI-помощник. Задавайте вопросы!",
-        'user_banned': "🚫 ВЫ ЗАБЛОКИРОВАНЫ.",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование"},
         'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]}
     },
@@ -137,7 +109,6 @@ TEXTS = {
         'access_granted': "Platformadan foydalanishingiz mumkin.",
         'subs_info': "💎 *TARIFLAR (1 oyga):*\n\n🥉 **Standard — 60,000 so'm**\n(1 ta kursga kirish + AI 200 ta savol)\n\n🥈 **Platinum — 120,000 so'm**\n(2 ta kursga kirish + AI 400 ta savol)\n\n🥇 **VIP — 2,000,000 so'm**\n(Barcha kurslar + Shaxsiy ustoz + Limitsiz AI)",
         'ai_welcome': "🤖 Men AI yordamchingizman. Savol bering!",
-        'user_banned': "🚫 SIZ BLOKLANDINGIZ!",
         'categories': {'prog': "💻 Dasturlash", 'design': "🎨 Dizayn", 'lang': "🌐 Tillar", '3d': "🏗️ 3D Modellashtirish"},
         'courses': {'prog': ["🤖 Telegram botlar", "🌐 Saytlar"], 'design': ["AI orqali dizayn"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"]}
     },
@@ -153,7 +124,6 @@ TEXTS = {
         'access_granted': "Welcome!",
         'subs_info': "💎 *PLANS (per month):*\n\n🥉 **Standard — 60,000 UZS**\n🥈 **Platinum — 120,000 UZS**\n🥇 **VIP — 2,000,000 UZS**",
         'ai_welcome': "🤖 I am your AI assistant.",
-        'user_banned': "🚫 YOU ARE BANNED!",
         'categories': {'prog': "💻 Programming", 'design': "🎨 Design", 'lang': "🌐 Languages", '3d': "🏗️ 3D Modeling"},
         'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"]}
     }
@@ -219,27 +189,28 @@ def handle_update(upd):
                 if action == "ok":
                     exp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30*86400))
                     db.update_user(target_uid, sub='standard', sub_expire=exp, unlocked=[], ai_count=0, step='main')
-                    send_msg(target_uid, "✅ Платеж принят! / To'lov tasdiqlandi!")
-                    send_msg(cid, f"✅ OK: {target_uid}")
+                    send_msg(target_uid, "✅ Платеж принят!"); send_msg(cid, f"✅ OK: {target_uid}")
                 elif action == "no":
                     db.update_user(target_uid, step='main')
-                    send_msg(target_uid, "❌ Платеж отклонен. / To'lov rad etildi.")
-                    send_msg(cid, f"❌ NO: {target_uid}")
+                    send_msg(target_uid, "❌ Платеж отклонен."); send_msg(cid, f"❌ NO: {target_uid}")
                 elif action == "fake":
                     db.update_user(target_uid, banned=1, step='banned')
-                    send_msg(target_uid, "🚫 БАН за фейк чек! / FAKE uchun BAN!")
-                    send_msg(cid, f"🚫 BANNED: {target_uid}")
-            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8'))
-            return
-        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8'))
+                    send_msg(target_uid, "🚫 БАН за фейк!"); send_msg(cid, f"🚫 BANNED: {target_uid}")
+            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8')); return
         return
 
     if 'message' not in upd: return
     m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS); txt = m.get('text', '').strip()
     u = db.get_user(uid)
     if not u: db.create_user(uid, m['from'].get('first_name','User'), m['from'].get('username','None')); u = db.get_user(uid)
-    if u.get('banned'): send_msg(cid, "🚫 SIZ BLOKLANDINGIZ!"); return
+    print(f"[LOG] User {uid} in step {u['step']} sent: {txt}")
+    
+    if u.get('banned'): send_msg(cid, "🚫 BAN!"); return
     lang = u.get('lang', 'ru'); t = TEXTS.get(lang, TEXTS['ru'])
+
+    if txt == '/reset':
+        db.update_user(uid, step="lang", agreed=0, lang=None, phone=None)
+        send_msg(cid, "🔄 Profile reset. Use /start"); return
 
     if 'contact' in m:
         db.update_user(uid, phone=m['contact']['phone_number'], step="agreement")
@@ -247,54 +218,18 @@ def handle_update(upd):
 
     if txt:
         if txt == '/version':
-            send_msg(cid, "🤖 *Yuksak Academy Bot*\nVersion 2.0 - FULL VIP\nStatus: Online"); return
+            send_msg(cid, "🤖 Version 2.1 (Robust Registration)"); return
         if any(txt == TEXTS[l]['support_btn'] for l in TEXTS):
-            send_msg(cid, "📞 *ТЕХНИЧЕСКАЯ ПОДДЕРЖКА:*\n\nTelegram: @yuksak_it\nТелефон: +998 50 777 51 52\nГрафик: 09:00 - 20:00"); return
+            send_msg(cid, "📞 *ТЕХНИЧЕСКАЯ ПОДДЕРЖКА:*\n\n@yuksak_it | +998 50 777 51 52"); return
         if any(txt == TEXTS[l]['founder_btn'] for l in TEXTS):
-            founder_bio = (
-                "👨‍💼 *ОСНОВАТЕЛЬ YUKSAK ACADEMY:*\n\n"
-                "**Kamolov Abdulaziz Sherzodbekovich**\n\n"
-                "Предприниматель, IT-специалист и основатель образовательной платформы Yuksak Academy. "
-                "Моя цель — сделать качественное IT-образование доступным для каждого жителя Узбекистана. "
-                "Мы собрали лучшие курсы и внедрили ИИ-технологии, чтобы ваше обучение было максимально эффективным.\n\n"
-                "🔗 Связь: @kamolov_it"
-            )
+            founder_bio = "👨‍💼 *ОСНОВАТЕЛЬ YUKSAK ACADEMY:*\n\nKamolov Abdulaziz Sherzodbekovich\n@kamolov_it"
             send_msg(cid, founder_bio); return
         if any(txt == TEXTS[l]['back_btn'] for l in TEXTS):
-            if u['step'] == 'cats':
-                db.update_user(uid, step="main")
-                send_msg(cid, "🏠", kb=get_main_kb(uid, lang))
-            elif u['step'].startswith('c_'):
-                db.update_user(uid, step="cats")
-                items = [{"text": v} for v in t['categories'].values()]
-                send_msg(cid, "Category:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True})
-            elif u['step'].startswith('lessons||'):
-                cat_name = u['step'].split("||")[1]
-                cat_id = None
-                for c, courses in t['courses'].items():
-                    if cat_name in courses: cat_id = c; break
-                if cat_id:
-                    db.update_user(uid, step=f"c_{cat_id}")
-                    items = [{"text": c} for c in t['courses'][cat_id]]
-                    send_msg(cid, f"📚 {t['categories'].get(cat_id, 'Course')}:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True})
-                else:
-                    db.update_user(uid, step="cats")
-                    items = [{"text": v} for v in t['categories'].values()]
-                    send_msg(cid, "Category:", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True})
-            else:
-                db.update_user(uid, step="main")
-                send_msg(cid, "🏠", kb=get_main_kb(uid, lang))
-            return
-
-    if 'photo' in m and not is_owner:
-        photo_id = m['photo'][-1]['file_id']
-        alert = f"📸 *YANGI CHEK!* (ID: `{uid}`)\n👤 {u.get('name')}"
-        for oid in OWNER_IDS: send_photo(oid, photo_id, caption=alert)
-        send_msg(cid, "✅ Чек получен! Ждите подтверждения."); return
+            db.update_user(uid, step="main"); send_msg(cid, "🏠", kb=get_main_kb(uid, lang)); return
 
     if txt == '/start':
         db.update_user(uid, lang=None, step="lang")
-        send_msg(cid, "Tilni tanlang / Выберите язык / Choose language:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
+        send_msg(cid, "🇺🇿 Tilni tanlang / 🇷🇺 Выберите язык:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
 
     if txt == "🔍 Проверка чеков" and is_owner:
         pending = [pu for pu in db.get_all_users().values() if pu.get('step') == 'awaiting_payment']
@@ -304,68 +239,40 @@ def handle_update(upd):
             send_msg(cid, f"👤 {pu['name']}\n🆔 `{pu['id']}`", kb=kb)
         return
 
-    if txt == '/admin' or txt.lower() in ['admin', 'админ']:
-        if is_owner:
-            db.update_user(uid, step="admin_main")
-            kb = [[{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}], [{"text": "АТАКА"}, {"text": "АТАКА ДЕТАЛЬНАЯ"}], [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}], [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}], [{"text": "🤖 AI логи"}, {"text": "📢 Объявление"}], [{"text": "🔎 Поиск пользователя"}, {"text": "🔓 Разблокировать"}, {"text": "⬅️ В меню"}]]
-            send_msg(cid, "🛠 Admin Panel", kb={"keyboard": kb, "resize_keyboard": True})
-        return
-
-    if u['step'] == "admin_main" and is_owner:
-        if txt == "📊 Статистика":
-            all_u = db.get_all_users()
-            send_msg(cid, f"📊 Всего: {len(all_u)}\n💎 Подписки: {len([x for x in all_u.values() if x['sub']!='none'])}")
-            return
-        elif txt == "💰 Финансы":
-            pays = db.get_payments(); total = sum([p['amount'] for p in pays])
-            send_msg(cid, f"💰 Всего: {total:,} UZS")
-            return
-        elif txt == "📢 Объявление":
-            db.update_user(uid, step="admin_broadcast")
-            send_msg(cid, "📢 Текст рассылки:", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
-            return
-        elif txt == "⬅️ В меню":
-            db.update_user(uid, step="main"); send_msg(cid, "🏠", kb=get_main_kb(uid, lang)); return
-
-    if u['step'] == "admin_broadcast" and is_owner and txt:
-        if txt == "⬅️ В меню": db.update_user(uid, step="admin_main"); return
-        all_u = db.get_all_users(); count = 0
-        for target_id in all_u:
-            if send_msg(target_id, f"📢 E'LON:\n\n{txt}"): count += 1
-            time.sleep(0.05)
-        send_msg(cid, f"✅ OK: {count}"); db.update_user(uid, step="admin_main"); return
+    if (txt == '/admin' or txt.lower() in ['admin', 'админ']) and is_owner:
+        db.update_user(uid, step="admin_main")
+        kb = [[{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}], [{"text": "АТАКА"}, {"text": "АТАКА ДЕТАЛЬНАЯ"}], [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}], [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}], [{"text": "🤖 AI логи"}, {"text": "📢 Объявление"}], [{"text": "🔎 Поиск пользователя"}, {"text": "🔓 Разблокировать"}, {"text": "⬅️ В меню"}]]
+        send_msg(cid, "🛠 Admin Panel", kb={"keyboard": kb, "resize_keyboard": True}); return
 
     if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
-        db.update_user(uid, lang=l, step="contact" if not u.get('phone') else "main")
+        db.update_user(uid, lang=l, step="contact")
         t_new = TEXTS[l]
         send_msg(cid, t_new['welcome'])
-        if not u.get('phone'):
-            send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True})
-        else:
-            send_msg(cid, t_new['access_granted'], kb=get_main_kb(uid, l)); return
+        send_msg(cid, t_new['req_contact'], kb={"keyboard": [[{"text": t_new['contact_btn'], "request_contact": True}]], "resize_keyboard": True}); return
 
-    if u['step'] == "agreement" and txt == t['agree_btn']:
-        db.update_user(uid, step="main", agreed=1); send_msg(cid, t['access_granted'], kb=get_main_kb(uid, lang)); return
+    # REGISTRATION - AGREEMENT (Robust check)
+    if u['step'] == "agreement":
+        normalized_txt = txt.lower().replace("✅", "").strip()
+        if "roziman" in normalized_txt or "согласен" in normalized_txt or "agree" in normalized_txt or txt == t['agree_btn']:
+            db.update_user(uid, step="main", agreed=1)
+            send_msg(cid, t['access_granted'], kb=get_main_kb(uid, lang))
+            return
 
     if txt == t['subs_btn']:
         db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "subs" and txt in ["Standard", "Platinum", "VIP"]:
-        card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n💳 VISA: `4231 2000 7034 2356` (KAMOLOV A.)"
-        send_msg(cid, f"{card}\n\n📸 Отправьте чек после оплаты."); db.update_user(uid, step="awaiting_payment")
-        for oid in OWNER_IDS: send_msg(oid, f"🔔 ЗАПРОС ТАРИФА: {u.get('name')} (ID: {uid})"); return
+        send_msg(cid, "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n\n📸 Отправьте чек."); db.update_user(uid, step="awaiting_payment"); return
+
+    if 'photo' in m and not is_owner:
+        for oid in OWNER_IDS: send_photo(oid, m['photo'][-1]['file_id'], caption=f"📸 YANGI CHEK! ID: `{uid}`")
+        send_msg(cid, "✅ Чек получен! Ждите подтверждения."); return
 
     if txt == t['ai_btn']:
         db.update_user(uid, step="ai_chat")
         send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "ai_chat" and txt:
-        sub = u.get('sub', 'none')
-        ai_limits = {'none': 0, 'standard': 200, 'platinum': 400, 'vip': 5000}
-        max_ai = ai_limits.get(sub, 0)
-        if not is_owner and u.get('ai_count', 0) >= max_ai:
-            send_msg(cid, "❌ Limit reached. Upgrade plan."); return
-        send_msg(cid, "🤖..."); resp = get_ai_resp(txt); send_msg(cid, resp)
-        db.update_user(uid, ai_count=u['ai_count']+1); return
+        send_msg(cid, "🤖..."); resp = get_ai_resp(txt); send_msg(cid, resp); return
 
     if txt == t['courses_btn']:
         db.update_user(uid, step="cats")
@@ -398,17 +305,15 @@ def handle_update(upd):
         except: pass
 
 def main():
-    keep_alive()
-    offset = 0
-    with ThreadPoolExecutor(max_workers=50) as executor:
+    keep_alive(); offset = 0
+    with ThreadPoolExecutor(max_workers=50) as ex:
         while True:
             try:
                 url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates?offset={offset}&timeout=15"
                 with urllib.request.urlopen(url, timeout=20) as resp:
                     data = json.loads(resp.read().decode('utf-8'))
                     for upd in data.get('result', []):
-                        offset = upd['update_id'] + 1; executor.submit(handle_update, upd)
+                        offset = upd['update_id'] + 1; ex.submit(handle_update, upd)
             except: time.sleep(0.5)
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()

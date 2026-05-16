@@ -105,6 +105,9 @@
                                     <span class="badge badge-danger">BANNED</span>
                                 {% else %}
                                     <span class="badge badge-success">ACTIVE</span>
+                                    {% if u.step == 'awaiting_payment' %}
+                                        <br><span class="badge" style="background: rgba(255, 170, 0, 0.2); color: #ffaa00; margin-top: 0.3rem; display: inline-block;">WAITING PAY</span>
+                                    {% endif %}
                                 {% endif %}
                             </td>
                             <td>
@@ -119,6 +122,18 @@
                                     </select>
                                     <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: var(--primary); border-color: var(--primary);">💳 Выдать</button>
                                 </form>
+                                
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                    <form action="/reject_payment" method="POST">
+                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                        <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ffaa00; border-color: #ffaa00;">❌ Отклонить</button>
+                                    </form>
+                                    <form action="/fake_payment" method="POST">
+                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                        <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ff3333; border-color: #ff3333;">🚫 Фейк</button>
+                                    </form>
+                                </div>
+
                                 {% if u.banned %}
                                 <form action="/unban" method="POST" style="margin-top: 0.5rem;">
                                     <input type="hidden" name="user_id" value="{{ u.id }}">

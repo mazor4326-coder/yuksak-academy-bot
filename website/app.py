@@ -1,9 +1,25 @@
 import os
 import sqlite3
+import urllib.request
+import urllib.parse
+import json
 from functools import wraps
 from flask import Flask, render_template, request, Response, send_from_directory, redirect
 
 app = Flask(__name__, static_folder='.', static_url_path='', template_folder='templates')
+
+TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+def send_telegram_msg(chat_id, text):
+    if not TELEGRAM_BOT_TOKEN:
+        return
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {'chat_id': chat_id, 'text': text, 'parse_mode': 'Markdown'}
+    try:
+        data = urllib.parse.urlencode(payload).encode('utf-8')
+        urllib.request.urlopen(url, data=data)
+    except Exception as e:
+        print(f"Error sending TG message: {e}")
 
 import time
 ADMIN_USER = "aziz67876578"
@@ -93,6 +109,45 @@ def unban_user():
     conn = get_db_connection()
     # Разблокируем, сбрасываем нарушения и "сжигаем" тариф
     conn.execute("UPDATE users SET banned=0, violations=0, sub='none', extra_ai=0 WHERE id=?", (user_id,))
+    conn.commit()
+    conn.close()
+    return redirect('/admin')
+
+@app.route('/reject_payment', methods=['POST'])
+@requires_auth
+def reject_payment():
+    user_id = request.form.get('user_id')
+    conn = get_db_connection()
+    user = conn.execute("SELECT lang FROM users WHERE id=?", (user_id,)).fetchone()
+    lang = user['lang'] if user and user['lang'] else 'ru'
+    
+    msgs = {
+        'ru': "❌ Ваш платеж отклонен. Пожалуйста, проверьте данные или свяжитесь с поддержкой.",
+        'uz': "❌ To'lovingiz rad etildi. Iltimos, ma'lumotlarni tekshiring yoki qo'llab-quvvatlash xizmatiga murojaat qiling.",
+        'en': "❌ Your payment was rejected. Please check the details or contact support."
+    }
+    send_telegram_msg(user_id, msgs.get(lang, msgs['ru']))
+    conn.execute("UPDATE users SET step='main' WHERE id=?", (user_id,))
+    conn.commit()
+    conn.close()
+    return redirect('/admin')
+
+@app.route('/fake_payment', methods=['POST'])
+@requires_auth
+def fake_payment():
+    user_id = request.form.get('user_id')
+    conn = get_db_connection()
+    
+    msg = (
+        "⚠️ *ВНИМАНИЕ / DIQQAT / ATTENTION*\n\n"
+        "🇷🇺 Вы отправили фальшивый чек. По закону Узбекистана это называется мошенничеством, и ваш аккаунт был зафиксирован. Если у вас есть претензии, пишите админу в техподдержку.\n\n"
+        "🇺🇿 Siz soxta chek yubordingiz. O'zbekiston qonunchiligiga ko'ra bu firibgarlik deb ataladi va sizning hisobingiz qayd etildi. Agar e'tirozlaringiz bo'lsa, texnik yordamga murojaat qiling.\n\n"
+        "🇺🇸 You sent a fake receipt. According to the laws of Uzbekistan, this is called fraud, and your account has been recorded. If you have any claims, contact tech support."
+    )
+    send_telegram_msg(user_id, msg)
+    
+    # Блокируем пользователя
+    conn.execute("UPDATE users SET banned=1, step='banned' WHERE id=?", (user_id,))
     conn.commit()
     conn.close()
     return redirect('/admin')

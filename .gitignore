@@ -1,6 +1,4 @@
 .env
-*.db
-*.json
 *.bak
 *.log
 __pycache__/

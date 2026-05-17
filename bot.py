@@ -26,6 +26,24 @@ TELEGRAM_BOT_TOKEN = os.getenv("BOT_TOKEN")
 GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 OWNER_IDS = ["1477103854"]
 
+# SO'KINISH DETEKTORI (RU + UZ Kirill + UZ Latin)
+BAD_WORDS = [
+    "бля", "блять", "блядь", "сука", "пизда", "пиздец", "хуй", "хуйня", "ебать", "ёбаный",
+    "ебаный", "еблан", "мудак", "мудила", "залупа", "пиздун", "ёб", "еб", "ёбт", "нахуй",
+    "похуй", "пиздаto", "хуйло", "ёбаный", "пиздёж", "гандон", "долбоёб", "шлюха",
+    "orospu", "qotib", "sikib", "sik", "sikin", "sikay", "amak", "amaki", "harom",
+    "haromzoda", "kaltak", "yalama", "yalamchi", "sassiq", "it bola", "itbola",
+    "xarom", "xaromzoda", "jallob", "fahsh", "орос", "оросу", "сик", "сикиб",
+    "амак", "ялама", "харом", "харомзода", "жаллоб", "қотиб", "ит bola", "итбола", "сассиқ"
+]
+
+def detect_profanity(text):
+    if not text: return False
+    t = text.lower()
+    for w in BAD_WORDS:
+        if w in t: return True
+    return False
+
 # DATABASE
 DB_NAME = "yuksak.db"
 class Database:
@@ -78,6 +96,19 @@ class Database:
         c = self.get_conn(); rows = c.execute("SELECT * FROM payments").fetchall(); c.close(); return [dict(r) for r in rows]
     def get_hacker_logs(self):
         c = self.get_conn(); rows = c.execute("SELECT * FROM hacker_logs ORDER BY id DESC LIMIT 50").fetchall(); c.close(); return [dict(r) for r in rows]
+    def update_course(self, n, d):
+        with self.lock:
+            c = self.get_conn(); c.execute("INSERT OR REPLACE INTO courses (name, data) VALUES (?,?)", (n, json.dumps(d))); c.commit(); c.close()
+    def update_interest(self, cat, uid):
+        with self.lock:
+            c = self.get_conn(); r = c.execute("SELECT user_ids FROM interests WHERE category=?", (cat,)).fetchone()
+            uids = json.loads(r['user_ids']) if r else []
+            if uid not in uids:
+                uids.append(uid); c.execute("INSERT OR REPLACE INTO interests (category, user_ids) VALUES (?,?)", (cat, json.dumps(uids))); c.commit()
+            c.close()
+    def get_interests_all(self):
+        c = self.get_conn(); rows = c.execute("SELECT * FROM interests").fetchall(); c.close()
+        return {r['category']: json.loads(r['user_ids']) for r in rows}
 
 db = Database(DB_NAME)
 
@@ -192,6 +223,16 @@ def handle_update(upd):
             if action == "ok":
                 exp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30*86400))
                 db.update_user(target_uid, sub='standard', sub_expire=exp, unlocked=[], ai_count=0, step='main')
+                
+                # Add payment entry
+                target_u = db.get_user(target_uid)
+                phone = target_u.get('phone') if target_u else '-'
+                pay_date = time.strftime('%Y-%m-%d %H:%M:%S')
+                with db.lock:
+                    c = db.get_conn()
+                    c.execute("INSERT INTO payments (user_id, amount, date, phone, tariff) VALUES (?,?,?,?,?)", (target_uid, 60000, pay_date, phone, 'standard'))
+                    c.commit(); c.close()
+                    
                 send_msg(target_uid, "✅ To'lov qabul qilindi!"); send_msg(cid, f"✅ OK: {target_uid}")
             elif action == "no": db.update_user(target_uid, step='main'); send_msg(target_uid, "❌ To'lov rad etildi."); send_msg(cid, f"❌ NO: {target_uid}")
             elif action == "fake": db.update_user(target_uid, banned=1); send_msg(target_uid, "🚫 FAKE uchun BAN!"); send_msg(cid, f"🚫 BANNED: {target_uid}")
@@ -222,18 +263,200 @@ def handle_update(upd):
         db.update_user(uid, lang=None, step="lang")
         send_msg(cid, "Tilni tanlang / Выберите язык:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
 
-    if txt == "🔍 Проверка чеков" and is_owner:
-        pending = [pu for pu in db.get_all_users().values() if pu.get('step') == 'awaiting_payment']
-        if not pending: send_msg(cid, "✅ Bo'sh."); return
-        for pu in pending[:5]:
-            kb = {"inline_keyboard": [[{"text": "✅ OK", "callback_data": f"adm_pay_ok_{pu['id']}"}, {"text": "❌ NO", "callback_data": f"adm_pay_no_{pu['id']}"}, {"text": "🚫 FAKE", "callback_data": f"adm_pay_fake_{pu['id']}"}]]}
-            send_msg(cid, f"👤 {pu['name']}\n🆔 `{pu['id']}`", kb=kb)
-        return
-
     if (txt == '/admin' or txt.lower() in ['admin', 'админ']) and is_owner:
         db.update_user(uid, step="admin_main")
-        kb = [[{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}], [{"text": "💰 Финансы"}, {"text": "📢 Объявление"}], [{"text": "⬅️ В меню"}]]
-        send_msg(cid, "🛠 Admin Panel", kb={"keyboard": kb, "resize_keyboard": True}); return
+        kb = [
+            [{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}],
+            [{"text": "🚨 Атака"}, {"text": "🔍 Атака детально"}],
+            [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}],
+            [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}],
+            [{"text": "🤖 AI логи"}, {"text": "🔎 Поиск пользователя"}],
+            [{"text": "📢 Объявление"}, {"text": "🔓 Разблокировать"}],
+            [{"text": "⬅️ В меню"}]
+        ]
+        send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True}); return
+
+    if is_owner:
+        # Broadcast step
+        if u['step'] == "admin_broadcast" and txt:
+            if txt == "⬅️ В меню" or txt == "/admin":
+                db.update_user(uid, step="admin_main")
+                kb = [
+                    [{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}],
+                    [{"text": "🚨 Атака"}, {"text": "🔍 Атака детально"}],
+                    [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}],
+                    [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}],
+                    [{"text": "🤖 AI логи"}, {"text": "🔎 Поиск пользователя"}],
+                    [{"text": "📢 Объявление"}, {"text": "🔓 Разблокировать"}],
+                    [{"text": "⬅️ В меню"}]
+                ]
+                send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True}); return
+            else:
+                all_u = db.get_all_users(); count = 0
+                for user_id in all_u:
+                    if send_msg(user_id, f"📢 *ОБЪЯВЛЕНИЕ:*\n\n{txt}"): count += 1
+                    time.sleep(0.05)
+                db.update_user(uid, step="admin_main")
+                send_msg(cid, f"✅ Xabar {count} ta foydalanuvchiga yuborildi!")
+                return
+
+        # Search step
+        if u['step'] == "admin_search" and txt:
+            if txt == "⬅️ В меню" or txt == "/admin":
+                db.update_user(uid, step="admin_main")
+                kb = [
+                    [{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}],
+                    [{"text": "🚨 Атака"}, {"text": "🔍 Атака детально"}],
+                    [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}],
+                    [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}],
+                    [{"text": "🤖 AI логи"}, {"text": "🔎 Поиск пользователя"}],
+                    [{"text": "📢 Объявление"}, {"text": "🔓 Разблокировать"}],
+                    [{"text": "⬅️ В меню"}]
+                ]
+                send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True}); return
+            else:
+                q = txt.strip().lower().replace("@", "")
+                all_u = db.get_all_users()
+                found = None
+                for user_id, user in all_u.items():
+                    if q == user_id or q == (user.get('phone') or '').replace('+', '') or q == (user.get('username') or '').lower():
+                        found = user; break
+                if found:
+                    viol = found.get('violations', 0)
+                    ban_status = "Ha" if found.get('banned') else "Yo'q"
+                    send_msg(cid, f"✅ *TOPILDI:*\n\n👤 {found.get('name','?')}\n🆔 `{found.get('id','?')}`\n📞 `{found.get('phone','?')}`\n👤 @{found.get('username','?')}\n💎 Tarif: {found.get('sub','none')}\n⚠️ Buzarliklar: {viol}\n🚫 Ban: {ban_status}")
+                else:
+                    send_msg(cid, "❌ Foydalanuvchi topilmadi. ID, +998... yoki @username to'g'ri kiriting.")
+                return
+
+        # Unban step
+        if u['step'] == "admin_unban" and txt:
+            if txt == "⬅️ В меню" or txt == "/admin":
+                db.update_user(uid, step="admin_main")
+                kb = [
+                    [{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}],
+                    [{"text": "🚨 Атака"}, {"text": "🔍 Атака детально"}],
+                    [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}],
+                    [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}],
+                    [{"text": "🤖 AI логи"}, {"text": "🔎 Поиск пользователя"}],
+                    [{"text": "📢 Объявление"}, {"text": "🔓 Разблокировать"}],
+                    [{"text": "⬅️ В меню"}]
+                ]
+                send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True}); return
+            else:
+                target_id = txt.strip()
+                target_user = db.get_user(target_id)
+                if target_user:
+                    db.update_user(target_id, banned=0, violations=0)
+                    send_msg(cid, f"✅ Foydalanuvchi (ID: {target_id}) blokdan chiqarildi!")
+                    send_msg(target_id, "🔔 Sizning hisobingiz admin tomonidan blokdan chiqarildi. Endi botdan foydalanishingiz mumkin.")
+                else:
+                    send_msg(cid, "❌ Bunday ID bilan foydalanuvchi topilmadi.")
+                return
+
+        # Video management steps
+        if 'video' in m:
+            db.update_user(uid, temp_video_id=m['video']['file_id'], step="admin_video_cat")
+            items = [[{"text": c}] for c in t['categories'].values()]
+            send_msg(cid, "📁 Category:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+        elif u['step'] == "admin_video_cat" and txt:
+            if txt == t['back_btn']: db.update_user(uid, step="main"); send_msg(cid, "OK", kb=get_main_kb(uid, lang)); return
+            cat_id = [k for k, v in t['categories'].items() if v == txt]
+            if cat_id:
+                db.update_user(uid, step=f"admin_video_course_{cat_id[0]}")
+                items = [[{"text": c}] for c in t['courses'][cat_id[0]]]
+                send_msg(cid, f"📚 {txt} - Course:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+            return
+        elif u['step'].startswith("admin_video_course_") and txt:
+            if txt == t['back_btn']: db.update_user(uid, step="admin_video_cat"); return
+            c = db.get_courses(); data = c.get(txt, [])
+            data.append({"video": u.get('temp_video_id'), "caption": f"{txt} - part {len(data)+1}"})
+            db.update_course(txt, data); db.update_user(uid, step="main"); send_msg(cid, "✅ Saved!", kb=get_main_kb(uid, lang)); return
+
+        # Main Admin menu click handling
+        if u['step'] == "admin_main" and txt:
+            if txt == "🔍 Проверка чеков":
+                pending = [pu for pu in db.get_all_users().values() if pu.get('step') == 'awaiting_payment']
+                if not pending: send_msg(cid, "✅ Bo'sh."); return
+                for pu in pending[:5]:
+                    kb = {"inline_keyboard": [[{"text": "✅ OK", "callback_data": f"adm_pay_ok_{pu['id']}"}, {"text": "❌ NO", "callback_data": f"adm_pay_no_{pu['id']}"}, {"text": "🚫 FAKE", "callback_data": f"adm_pay_fake_{pu['id']}"}]]}
+                    send_msg(cid, f"👤 {pu['name']}\n🆔 `{pu['id']}`", kb=kb)
+                return
+            elif txt == "📊 Статистика":
+                all_u = db.get_all_users()
+                total = len(all_u)
+                banned = len([x for x in all_u.values() if x.get('banned')])
+                subs = len([x for x in all_u.values() if x.get('sub') != 'none'])
+                ai_total = sum(x.get('ai_count', 0) for x in all_u.values())
+                send_msg(cid, f"📊 *СТАТИСТИКА:*\n\n👥 Всего: {total}\n💎 Подписчики: {subs}\n🚫 Забанены: {banned}\n🤖 AI запросов: {ai_total}")
+                return
+            elif txt == "🚨 Атака":
+                logs = db.get_hacker_logs()
+                if not logs: send_msg(cid, "✅ Атак не было.")
+                else:
+                    res = [f"🚨 {l['name']} (@{l['username']}) — {l['reason']}" for l in logs[:10]]
+                    send_msg(cid, "🚨 *АТАКИ (кратко):*\n\n" + "\n".join(res))
+                return
+            elif txt == "🔍 Атака детально":
+                logs = db.get_hacker_logs()
+                if not logs: send_msg(cid, "✅ Чисто.")
+                else:
+                    for l in logs[:5]:
+                        send_msg(cid, f"🚨 *АТАКА:*\n👤 {l['name']} (@{l['username']})\n🆔 `{l['user_id']}`\n📞 `{l['phone']}`\n💬 `{l['bad_text']}`\n🛡️ {l['reason']}\n📅 {l['timestamp']}")
+                return
+            elif txt == "📈 Аналитика":
+                all_u = list(db.get_all_users().values())
+                std = len([x for x in all_u if x.get('sub') == 'standard'])
+                plt = len([x for x in all_u if x.get('sub') == 'platinum'])
+                vip = len([x for x in all_u if x.get('sub') == 'vip'])
+                interests = db.get_interests_all()
+                top = sorted(interests.items(), key=lambda x: len(x[1]), reverse=True)[:3]
+                top_str = "\n".join([f"  {c}: {len(ids)} ta" for c, ids in top]) if top else "  Yo'q"
+                send_msg(cid, f"📈 *АНАЛИТИКА:*\n\n💎 Tariflar:\n  Standard: {std}\n  Platinum: {plt}\n  VIP: {vip}\n\n🔥 Top yo'nalishlar:\n{top_str}")
+                return
+            elif txt == "💰 Финансы":
+                ps = db.get_payments(); now = time.time()
+                t_all = sum(p['amount'] for p in ps)
+                t_24h = sum(p['amount'] for p in ps if now - time.mktime(time.strptime(p['date'], '%Y-%m-%d %H:%M:%S')) < 86400)
+                t_7d = sum(p['amount'] for p in ps if now - time.mktime(time.strptime(p['date'], '%Y-%m-%d %H:%M:%S')) < 604800)
+                t_30d = sum(p['amount'] for p in ps if now - time.mktime(time.strptime(p['date'], '%Y-%m-%d %H:%M:%S')) < 2592000)
+                send_msg(cid, f"💰 *ФИНАНСЫ:*\n\n📈 Всего: {t_all:,} сум\n🕒 За 24ч: {t_24h:,} сум\n📅 За 7 дней: {t_7d:,} сум\n📆 За 30 дней: {t_30d:,} сум".replace(",", " "))
+                return
+            elif txt == "👥 Участники":
+                all_u = list(db.get_all_users().values())
+                total = len(all_u); subs = len([x for x in all_u if x.get('sub') != 'none'])
+                agreed = len([x for x in all_u if x.get('agreed')])
+                lines = [f"👤 {x.get('name','?')} | {x.get('sub','none')} | {'🚫' if x.get('banned') else '✅'}" for x in all_u[:15]]
+                send_msg(cid, f"👥 *УЧАСТНИКИ:*\n\nВсего: {total} | Подписка: {subs} | Правила: {agreed}\n\n" + "\n".join(lines))
+                return
+            elif txt == "🎬 Видео контент":
+                send_msg(cid, "🎬 Видео юклаш учун аввал видео файлни юборинг (чатга оддий видео сифатида). / Для загрузки видео сначала отправьте видеофайл в чат.")
+                return
+            elif txt == "🤖 AI логи":
+                all_u = list(db.get_all_users().values())
+                lines = []
+                for x in sorted(all_u, key=lambda x: x.get('ai_count', 0), reverse=True)[:10]:
+                    viol = x.get('violations', 0)
+                    status = f"⚠️ {viol} buzarlik" if viol > 0 else "✅"
+                    lines.append(f"👤 {x.get('name','?')}: {x.get('ai_count',0)} savol | {status}")
+                send_msg(cid, "🤖 *AI ЛОГИ (Top 10):*\n\n" + "\n".join(lines) if lines else "Пусто")
+                return
+            elif txt == "🔎 Поиск пользователя":
+                db.update_user(uid, step="admin_search")
+                send_msg(cid, "🔎 *Foydalanuvchini qidirish:*\n\nID, telefon raqami (+998...) yoki @username yuboring:", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
+                return
+            elif txt == "📢 Объявление":
+                db.update_user(uid, step="admin_broadcast")
+                send_msg(cid, "📢 Barcha foydalanuvchilarga yuboriladigan xabarni yozing:\n\n(Bekor qilish uchun /admin yozing)", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
+                return
+            elif txt == "🔓 Разблокировать":
+                db.update_user(uid, step="admin_unban")
+                send_msg(cid, "🔓 *Foydalanuvchini blokdan chiqarish:*\n\nBlokdan chiqarish kerak bo'lgan foydalanuvchining ID raqamini yuboring:", kb={"keyboard": [[{"text": "⬅️ В меню"}]], "resize_keyboard": True})
+                return
+            elif txt == "⬅️ В меню":
+                db.update_user(uid, step="main")
+                send_msg(cid, "OK", kb=get_main_kb(uid, lang))
+                return
 
     if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
@@ -257,7 +480,45 @@ def handle_update(upd):
     if txt == t['ai_btn']:
         db.update_user(uid, step="ai_chat"); send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "ai_chat" and txt:
-        resp = get_ai_resp(txt); send_msg(cid, resp); return
+        if txt == t['back_btn']:
+            db.update_user(uid, step="main")
+            send_msg(cid, "🏠", kb=get_main_kb(uid, lang))
+            return
+            
+        # Profanity check
+        if detect_profanity(txt):
+            v = u.get('violations', 0) + 1
+            db.update_user(uid, violations=v)
+            remaining = 3 - v
+            if v >= 3:
+                db.update_user(uid, banned=1)
+                # Notify admin
+                alert = f"🚨 *BAN:* {u.get('name')} (@{u.get('username')})\n🆔 `{uid}`\n💬 `{txt}`\n📌 So'kindi → BAN"
+                for oid in OWNER_IDS: send_msg(oid, alert)
+                send_msg(cid, "🚫 BAN!")
+            else:
+                warn_msgs = {
+                    'ru': f"⚠️ *ПРЕДУПРЕЖДЕНИЕ #{v}/3!*\n\nВы нарушили правила бота (нецензурная лексика).\n\n🚫 Осталось предупреждений: {remaining}\nЕсли ещё {remaining} раз нарушите — ваш аккаунт будет *заблокирован навсегда!*",
+                    'uz': f"⚠️ *OGOHLANTIRISH #{v}/3!*\n\nSiz bot qoidalarini buzdingiz (so'kinish).\n\n🚫 Qolgan ogohlantirishlar: {remaining}\nYana {remaining} marta buzarsangiz — hisobingiz *abadiy bloklanadi!*",
+                    'en': f"⚠️ *WARNING #{v}/3!*\n\nYou violated bot rules (profanity).\n\n🚫 Remaining warnings: {remaining}\nIf you violate {remaining} more times — your account will be *permanently banned!*"
+                }
+                send_msg(cid, warn_msgs.get(lang, warn_msgs['ru']))
+            return
+
+        resp = get_ai_resp(txt)
+        if "VIOLATION_DETECTED" in resp:
+            v = u.get('violations', 0) + 1
+            db.update_user(uid, violations=v)
+            remaining = 3 - v
+            if v >= 3:
+                db.update_user(uid, banned=1)
+                send_msg(cid, "🚫 BAN!")
+            else:
+                send_msg(cid, f"⚠️ Нарушение №{v}! После 3-го нарушения ваш аккаунт будет заблокирован навсегда.\n🚫 Qoldi: {remaining} ta")
+        else:
+            send_msg(cid, resp.replace("*",""))
+            db.update_user(uid, ai_count=u.get('ai_count', 0) + 1)
+        return
 
     if txt == t['courses_btn']:
         db.update_user(uid, step="cats"); items = [{"text": v} for v in t['categories'].values()]

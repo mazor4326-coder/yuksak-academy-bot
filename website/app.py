@@ -92,6 +92,13 @@ def grant_access():
     if action in ['standard', 'platinum', 'vip']:
         expire_date = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30 * 86400))
         conn.execute("UPDATE users SET sub=?, sub_expire=?, unlocked='[]', ai_count=0 WHERE id=?", (action, expire_date, user_id))
+        
+        # Get phone number to log in payments table
+        u = conn.execute("SELECT phone FROM users WHERE id=?", (user_id,)).fetchone()
+        phone = u['phone'] if u and u['phone'] else '-'
+        amount = 60000 if action == 'standard' else (120000 if action == 'platinum' else 2000000)
+        pay_date = time.strftime('%Y-%m-%d %H:%M:%S')
+        conn.execute("INSERT INTO payments (user_id, amount, date, phone, tariff) VALUES (?,?,?,?,?)", (user_id, amount, pay_date, phone, action))
     elif action == 'extra100':
         conn.execute("UPDATE users SET extra_ai = extra_ai + 100 WHERE id=?", (user_id,))
     elif action == 'extra200':

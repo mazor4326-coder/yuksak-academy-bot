@@ -241,10 +241,22 @@ def handle_update(upd):
     if 'callback_query' in upd:
         cq = upd['callback_query']; cid = cq['message']['chat']['id']; uid = str(cq['from']['id']); data = cq['data']
         if data.startswith("adm_pay_") and str(uid) in OWNER_IDS:
-            _, _, action, target_uid = data.split("_")
+            parts = data.split("_")
+            if len(parts) >= 5:
+                action = parts[2]
+                plan = parts[3]
+                target_uid = parts[4]
+            else:
+                action = parts[2]
+                plan = "standard"
+                target_uid = parts[3]
+
             if action == "ok":
                 exp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30*86400))
-                db.update_user(target_uid, sub='standard', sub_expire=exp, unlocked=[], ai_count=0, step='main')
+                db.update_user(target_uid, sub=plan, sub_expire=exp, unlocked=[], ai_count=0, step='main')
+                
+                # Determine amount based on plan
+                amount = 60000 if plan == "standard" else (120000 if plan == "platinum" else 2000000)
                 
                 # Add payment entry
                 target_u = db.get_user(target_uid)
@@ -252,10 +264,10 @@ def handle_update(upd):
                 pay_date = time.strftime('%Y-%m-%d %H:%M:%S')
                 with db.lock:
                     c = db.get_conn()
-                    c.execute("INSERT INTO payments (user_id, amount, date, phone, tariff) VALUES (?,?,?,?,?)", (target_uid, 60000, pay_date, phone, 'standard'))
+                    c.execute("INSERT INTO payments (user_id, amount, date, phone, tariff) VALUES (?,?,?,?,?)", (target_uid, amount, pay_date, phone, plan))
                     c.commit(); c.close()
                     
-                send_msg(target_uid, "✅ To'lov qabul qilindi!"); send_msg(cid, f"✅ OK: {target_uid}")
+                send_msg(target_uid, "✅ To'lov qabul qilindi!"); send_msg(cid, f"✅ OK: {target_uid} ({plan.upper()})")
             elif action == "no": db.update_user(target_uid, step='main'); send_msg(target_uid, "❌ To'lov rad etildi."); send_msg(cid, f"❌ NO: {target_uid}")
             elif action == "fake": db.update_user(target_uid, banned=1); send_msg(target_uid, "🚫 FAKE uchun BAN!"); send_msg(cid, f"🚫 BANNED: {target_uid}")
         urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8')); return
@@ -493,9 +505,10 @@ def handle_update(upd):
 
     if txt == t['subs_btn']:
         db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
-    elif u['step'] == "subs" and txt in ["Standard", "Platinum", "VIP"]:
+    elif txt in ["Standard", "Platinum", "VIP"]:
         card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)"
-        db.update_user(uid, step="awaiting_payment")
+        plan = txt.lower()
+        db.update_user(uid, step=f"awaiting_payment||{plan}")
         send_msg(cid, f"{card}\n\n📸 To'lov chekini yuboring.")
         
         # Admin notification
@@ -506,11 +519,15 @@ def handle_update(upd):
         return
 
     if 'photo' in m and not is_owner:
+        plan = "standard"
+        if u.get('step', '').startswith("awaiting_payment||"):
+            plan = u['step'].split("||")[1]
+            
         caption = f"📸 YANGI CHEK KELDI!\n\n👤 Foydalanuvchi: {u.get('name')} (@{u.get('username')})\n🆔 ID: {uid}\n📱 Telefon: {u.get('phone')}\n💰 Status: To'lov cheki yuborildi."
         kb = {"inline_keyboard": [[
-            {"text": "✅ OK", "callback_data": f"adm_pay_ok_{uid}"},
-            {"text": "❌ NO", "callback_data": f"adm_pay_no_{uid}"},
-            {"text": "🚫 FAKE", "callback_data": f"adm_pay_fake_{uid}"}
+            {"text": "✅ OK", "callback_data": f"adm_pay_ok_{plan}_{uid}"},
+            {"text": "❌ NO", "callback_data": f"adm_pay_no_{plan}_{uid}"},
+            {"text": "🚫 FAKE", "callback_data": f"adm_pay_fake_{plan}_{uid}"}
         ]]}
         for oid in OWNER_IDS:
             send_photo(oid, m['photo'][-1]['file_id'], caption=caption, kb=kb)
@@ -571,7 +588,11 @@ def handle_update(upd):
     if u['step'].startswith("c_") and txt:
         cat = u['step'].split("_")[1]
         if txt in t['courses'].get(cat, []):
-            if not is_owner and u['sub'] == 'none': send_msg(cid, "🔒 To'lov qiling!"); return
+            if not is_owner and u['sub'] == 'none':
+                db.update_user(uid, step="subs")
+                send_msg(cid, "🔒 Kursni ochish uchun tarifni faollashtiring / Для доступа к курсу активируйте тариф:")
+                send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True})
+                return
             db.update_user(uid, step=f"lessons||{txt}"); c_id = get_course_id(txt); data = db.get_courses().get(c_id, [])
             items = [{"text": f"Qism {i+1}"} for i in range(len(data))]
             send_msg(cid, f"Курс: {txt}", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return

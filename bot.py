@@ -128,7 +128,7 @@ TEXTS = {
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование"},
         'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]},
         'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
-        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
+        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak\\_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     },
     'uz': {
         'choose_lang': "Tilni tanlang / Выберите язык / Choose language:",
@@ -145,7 +145,7 @@ TEXTS = {
         'categories': {'prog': "💻 Dasturlash", 'design': "🎨 Dizayn", 'lang': "🌐 Tillar", '3d': "🏗️ 3D Modellashtirish"},
         'courses': {'prog': ["🤖 Telegram botlar", "🌐 Saytlar"], 'design': ["AI orqali dizayn"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"]},
         'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
-        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
+        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak\\_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     },
     'en': {
         'choose_lang': "Choose language:",
@@ -162,7 +162,7 @@ TEXTS = {
         'categories': {'prog': "💻 Programming", 'design': "🎨 Design", 'lang': "🌐 Languages", '3d': "🏗️ 3D Modeling"},
         'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"]},
         'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
-        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
+        'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak\\_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     }
 }
 
@@ -180,22 +180,44 @@ def send_msg(cid, txt, kb=None):
     try:
         urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data=urllib.parse.urlencode(p).encode('utf-8'))
         return True
-    except: return False
+    except:
+        p.pop('parse_mode', None)
+        try:
+            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", data=urllib.parse.urlencode(p).encode('utf-8'))
+            return True
+        except:
+            return False
 
 def send_photo(cid, photo_id, caption=None, kb=None):
     p = {'chat_id': cid, 'photo': photo_id, 'parse_mode': 'Markdown'}
     if caption: p['caption'] = caption
     if kb: p['reply_markup'] = json.dumps(kb)
-    try: urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto", data=urllib.parse.urlencode(p).encode('utf-8')); return True
-    except: return False
+    try:
+        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto", data=urllib.parse.urlencode(p).encode('utf-8'))
+        return True
+    except:
+        p.pop('parse_mode', None)
+        try:
+            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto", data=urllib.parse.urlencode(p).encode('utf-8'))
+            return True
+        except:
+            return False
 
 def send_vid(cid, vid, cap=None, kb=None):
     is_owner = str(cid) in OWNER_IDS
     p = {'chat_id': cid, 'video': vid, 'protect_content': str(not is_owner).lower(), 'parse_mode': 'Markdown'}
     if cap: p['caption'] = cap
     if kb: p['reply_markup'] = json.dumps(kb)
-    try: urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendVideo", data=urllib.parse.urlencode(p).encode('utf-8')); return True
-    except: return False
+    try:
+        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendVideo", data=urllib.parse.urlencode(p).encode('utf-8'))
+        return True
+    except:
+        p.pop('parse_mode', None)
+        try:
+            urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendVideo", data=urllib.parse.urlencode(p).encode('utf-8'))
+            return True
+        except:
+            return False
 
 def get_ai_resp(prompt):
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GOOGLE_API_KEY}"
@@ -255,7 +277,9 @@ def handle_update(upd):
         send_msg(cid, t['thanks']); send_msg(cid, t['agreement'], kb={"keyboard": [[{"text": t['agree_btn']}]], "resize_keyboard": True}); return
 
     if txt:
-        if any(txt == TEXTS[l]['support_btn'] for l in TEXTS): send_msg(cid, t['support_txt']); return
+        t_low = txt.lower()
+        if any(x in t_low for x in ["tex. yordam", "tex yordam", "поддерж", "support", "qo'llab-quvvatlash"]) or any(txt == TEXTS[l]['support_btn'] for l in TEXTS):
+            send_msg(cid, t['support_txt']); return
         if any(txt == TEXTS[l]['founder_btn'] for l in TEXTS): send_msg(cid, t['founder_txt']); return
         if any(txt == TEXTS[l]['back_btn'] for l in TEXTS): db.update_user(uid, step="main"); send_msg(cid, "🏠", kb=get_main_kb(uid, lang)); return
 

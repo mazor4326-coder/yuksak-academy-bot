@@ -471,10 +471,25 @@ def handle_update(upd):
         db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif u['step'] == "subs" and txt in ["Standard", "Platinum", "VIP"]:
         card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)"
-        send_msg(cid, f"{card}\n\n📸 To'lov chekini yuboring."); db.update_user(uid, step="awaiting_payment"); return
+        db.update_user(uid, step="awaiting_payment")
+        send_msg(cid, f"{card}\n\n📸 To'lov chekini yuboring.")
+        
+        # Admin notification
+        tariff_emoji = "🥉 Standard" if txt == "Standard" else ("🥈 Platinum" if txt == "Platinum" else "🥇 VIP")
+        alert = f"🔔 YANGI TO'LOV SO'ROVI!\n\n👤 Foydalanuvchi: {u.get('name')} (@{u.get('username')})\n🆔 ID: {uid}\n📱 Telefon: {u.get('phone')}\n💰 Tarif: {tariff_emoji}"
+        for oid in OWNER_IDS:
+            send_msg(oid, alert)
+        return
 
     if 'photo' in m and not is_owner:
-        for oid in OWNER_IDS: send_photo(oid, m['photo'][-1]['file_id'], caption=f"📸 YANGI CHEK! ID: `{uid}`")
+        caption = f"📸 YANGI CHEK KELDI!\n\n👤 Foydalanuvchi: {u.get('name')} (@{u.get('username')})\n🆔 ID: {uid}\n📱 Telefon: {u.get('phone')}\n💰 Status: To'lov cheki yuborildi."
+        kb = {"inline_keyboard": [[
+            {"text": "✅ OK", "callback_data": f"adm_pay_ok_{uid}"},
+            {"text": "❌ NO", "callback_data": f"adm_pay_no_{uid}"},
+            {"text": "🚫 FAKE", "callback_data": f"adm_pay_fake_{uid}"}
+        ]]}
+        for oid in OWNER_IDS:
+            send_photo(oid, m['photo'][-1]['file_id'], caption=caption, kb=kb)
         send_msg(cid, "✅ Qabul qilindi!"); return
 
     if txt == t['ai_btn']:

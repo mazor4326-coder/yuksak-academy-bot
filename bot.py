@@ -270,6 +270,30 @@ def handle_update(upd):
                 send_msg(target_uid, "✅ To'lov qabul qilindi!"); send_msg(cid, f"✅ OK: {target_uid} ({plan.upper()})")
             elif action == "no": db.update_user(target_uid, step='main'); send_msg(target_uid, "❌ To'lov rad etildi."); send_msg(cid, f"❌ NO: {target_uid}")
             elif action == "fake": db.update_user(target_uid, banned=1); send_msg(target_uid, "🚫 FAKE uchun BAN!"); send_msg(cid, f"🚫 BANNED: {target_uid}")
+        
+        elif data.startswith("adm_delvid||") and str(uid) in OWNER_IDS:
+            parts = data.split("||")
+            c_id = parts[1]
+            idx = int(parts[2])
+            courses = db.get_courses()
+            data_list = courses.get(c_id, [])
+            if 0 <= idx < len(data_list):
+                data_list.pop(idx)
+                db.update_course(c_id, data_list)
+                send_msg(cid, f"✅ Видео часть {idx+1} удалено!")
+            
+            # Re-render inline buttons
+            courses = db.get_courses()
+            data_list = courses.get(c_id, [])
+            if not data_list:
+                send_msg(cid, "📭 Все видео из этого курса удалены.")
+            else:
+                buttons = []
+                for i, item in enumerate(data_list):
+                    buttons.append([{"text": f"🗑️ Часть {i+1}", "callback_data": f"adm_delvid||{c_id}||{i}"}])
+                kb = {"inline_keyboard": buttons}
+                send_msg(cid, "🎬 *Обновленный список видео:*", kb=kb)
+                
         urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8')); return
 
     if 'message' not in upd: return
@@ -413,6 +437,70 @@ def handle_update(upd):
             data.append({"video": u.get('temp_video_id'), "caption": f"{txt} - part {len(data)+1}"})
             db.update_course(c_id, data); db.update_user(uid, step="main"); send_msg(cid, "✅ Saved!", kb=get_main_kb(uid, lang)); return
 
+        # Video menu steps
+        if u['step'] == "admin_video_menu" and txt:
+            if txt == "➕ Добавить видео":
+                send_msg(cid, "🎬 *Для добавления видео:* сначала отправьте видеофайл в этот чат (как обычное видео).")
+                return
+            elif txt == "🗑️ Удалить видео":
+                db.update_user(uid, step="admin_del_cat")
+                items = [[{"text": v}] for v in t['categories'].values()]
+                send_msg(cid, "📁 Выберите категорию курса для удаления видео:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+                return
+            elif txt == "⬅️ В меню":
+                db.update_user(uid, step="admin_main")
+                kb = [
+                    [{"text": "🔍 Проверка чеков"}, {"text": "📊 Статистика"}],
+                    [{"text": "🚨 Атака"}, {"text": "🔍 Атака детально"}],
+                    [{"text": "📈 Аналитика"}, {"text": "💰 Финансы"}],
+                    [{"text": "👥 Участники"}, {"text": "🎬 Видео контент"}],
+                    [{"text": "🤖 AI логи"}, {"text": "🔎 Поиск пользователя"}],
+                    [{"text": "📢 Объявление"}, {"text": "🔓 Разблокировать"}],
+                    [{"text": "⬅️ В меню"}]
+                ]
+                send_msg(cid, "🛠️ *Admin Panel*", kb={"keyboard": kb, "resize_keyboard": True})
+                return
+
+        if u['step'] == "admin_del_cat" and txt:
+            if txt == t['back_btn']:
+                db.update_user(uid, step="admin_video_menu")
+                kb = {"keyboard": [
+                    [{"text": "➕ Добавить видео"}, {"text": "🗑️ Удалить видео"}],
+                    [{"text": "⬅️ В меню"}]
+                ], "resize_keyboard": True}
+                send_msg(cid, "🎬 *Управление видео контентом:*\n\nВыберите действие ниже:", kb=kb)
+                return
+            cat_id = [k for k, v in t['categories'].items() if v == txt]
+            if cat_id:
+                db.update_user(uid, step=f"admin_del_course_{cat_id[0]}")
+                items = [[{"text": c}] for c in t['courses'][cat_id[0]]]
+                send_msg(cid, f"📚 {txt} - Выберите курс для удаления видео:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+            return
+
+        if u['step'].startswith("admin_del_course_") and txt:
+            if txt == t['back_btn']:
+                db.update_user(uid, step="admin_del_cat")
+                items = [[{"text": v}] for v in t['categories'].values()]
+                send_msg(cid, "📁 Выберите категорию курса для удаления видео:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+                return
+            c_id = get_course_id(txt)
+            courses = db.get_courses()
+            data = courses.get(c_id, [])
+            if not data:
+                data = courses.get(txt, [])
+            if not data:
+                send_msg(cid, "📭 В этом курсе пока нет видео.")
+                return
+            
+            # Show list of videos to delete
+            msg = f"🎬 *Управление видео в курсе {txt}:*\n\nНажмите на кнопку ниже, чтобы безвозвратно удалить соответствующую часть видео:"
+            buttons = []
+            for i, item in enumerate(data):
+                buttons.append([{"text": f"🗑️ Часть {i+1}", "callback_data": f"adm_delvid||{c_id}||{i}"}])
+            kb = {"inline_keyboard": buttons}
+            send_msg(cid, msg, kb=kb)
+            return
+
         # Main Admin menu click handling
         if u['step'] == "admin_main" and txt:
             if txt == "🔍 Проверка чеков":
@@ -470,7 +558,12 @@ def handle_update(upd):
                 send_msg(cid, f"👥 *УЧАСТНИКИ:*\n\nВсего: {total} | Подписка: {subs} | Правила: {agreed}\n\n" + "\n".join(lines))
                 return
             elif txt == "🎬 Видео контент":
-                send_msg(cid, "🎬 Видео юклаш учун аввал видео файлни юборинг (чатга оддий видео сифатида). / Для загрузки видео сначала отправьте видеофайл в чат.")
+                db.update_user(uid, step="admin_video_menu")
+                kb = {"keyboard": [
+                    [{"text": "➕ Добавить видео"}, {"text": "🗑️ Удалить видео"}],
+                    [{"text": "⬅️ В меню"}]
+                ], "resize_keyboard": True}
+                send_msg(cid, "🎬 *Управление видео контентом:*\n\nВыберите действие ниже:", kb=kb)
                 return
             elif txt == "🤖 AI логи":
                 all_u = list(db.get_all_users().values())

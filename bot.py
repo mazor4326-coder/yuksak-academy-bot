@@ -405,9 +405,13 @@ def handle_update(upd):
             return
         elif u['step'].startswith("admin_video_course_") and txt:
             if txt == t['back_btn']: db.update_user(uid, step="admin_video_cat"); return
-            c = db.get_courses(); data = c.get(txt, [])
+            c_id = get_course_id(txt)
+            c = db.get_courses()
+            data = c.get(c_id, [])
+            if not data:
+                data = c.get(txt, [])
             data.append({"video": u.get('temp_video_id'), "caption": f"{txt} - part {len(data)+1}"})
-            db.update_course(txt, data); db.update_user(uid, step="main"); send_msg(cid, "✅ Saved!", kb=get_main_kb(uid, lang)); return
+            db.update_course(c_id, data); db.update_user(uid, step="main"); send_msg(cid, "✅ Saved!", kb=get_main_kb(uid, lang)); return
 
         # Main Admin menu click handling
         if u['step'] == "admin_main" and txt:
@@ -593,12 +597,22 @@ def handle_update(upd):
                 send_msg(cid, "🔒 Kursni ochish uchun tarifni faollashtiring / Для доступа к курсу активируйте тариф:")
                 send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True})
                 return
-            db.update_user(uid, step=f"lessons||{txt}"); c_id = get_course_id(txt); data = db.get_courses().get(c_id, [])
+            db.update_user(uid, step=f"lessons||{txt}")
+            c_id = get_course_id(txt)
+            courses = db.get_courses()
+            data = courses.get(c_id, [])
+            if not data:
+                data = courses.get(txt, [])
             items = [{"text": f"Qism {i+1}"} for i in range(len(data))]
             send_msg(cid, f"Курс: {txt}", kb={"keyboard": [items[i:i+2] for i in range(0, len(items), 2)] + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
 
     if u['step'].startswith("lessons||") and txt:
-        course_name = u['step'].split("||")[1]; c_id = get_course_id(course_name); data = db.get_courses().get(c_id, [])
+        course_name = u['step'].split("||")[1]
+        c_id = get_course_id(course_name)
+        courses = db.get_courses()
+        data = courses.get(c_id, [])
+        if not data:
+            data = courses.get(course_name, [])
         try:
             pnum = int(txt.split()[-1])
             if 1 <= pnum <= len(data): v = data[pnum-1]; send_vid(cid, v['video'], v.get('caption'))

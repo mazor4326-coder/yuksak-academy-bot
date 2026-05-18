@@ -44,6 +44,66 @@ def detect_profanity(text):
         if w in t: return True
     return False
 
+def auto_git_push():
+    def task():
+        try:
+            if not os.path.exists(".git"): return
+            import subprocess
+            subprocess.run(["git", "config", "user.name", "Yuksak Bot"], capture_output=True)
+            subprocess.run(["git", "config", "user.email", "bot@yuksak.academy"], capture_output=True)
+            subprocess.run(["git", "add", "yuksak.db", "courses_backup.json"], capture_output=True)
+            subprocess.run(["git", "commit", "-m", "db: Auto-update courses database [skip ci]"], capture_output=True)
+            subprocess.run(["git", "push"], capture_output=True)
+            print("[AUTO-GIT] Database and backup pushed to GitHub successfully.")
+        except Exception as e:
+            print(f"[AUTO-GIT] Error syncing database: {e}")
+    threading.Thread(target=task, daemon=True).start()
+
+def check_for_security_threats(text, uid):
+    if str(uid) in OWNER_IDS: return None
+    if not text: return None
+    t_low = text.lower()
+    
+    admin_patterns = [
+        r'\badmin\b', r'\bадмин\b', 'give me admin', 'give_me_admin', 'givemeadmin',
+        'админка', 'сделай админом', 'стать админом', 'give_admin', 'get_admin'
+    ]
+    for pattern in admin_patterns:
+        if pattern in t_low or re.search(pattern, t_low):
+            return "Попытка несанкционированного доступа (Ключевое слово администратора)"
+            
+    link_patterns = [
+        r'https?://', r't\.me/', r'telegram\.me/', r'www\.', 
+        r'\b[a-zA-Z0-9.-]+\.(com|uz|ru|net|org|info|biz|gov|edu|me|io|click|xyz|tk|ml|ga|cf|gq)\b'
+    ]
+    for pattern in link_patterns:
+        if re.search(pattern, t_low):
+            return "Отправка ссылок или доменов (Защита от спама/фишинга)"
+            
+    jailbreak_patterns = [
+        "ignore previous instructions", "ignore the instructions above", "developer mode", 
+        "jailbreak", "dan mode", "system prompt", "expose system instructions", "reveal system",
+        "ты больше не", "забудь предыдущие", "правила игры изменились", "acting as a", "simulate a",
+        "under no circumstances reveal", "system instructions", "system message", "override safety"
+    ]
+    for pattern in jailbreak_patterns:
+        if pattern in t_low:
+            return "Попытка взлома ИИ / Prompt Injection"
+            
+    exploit_patterns = [
+        "union select", "select * from", "drop table", "insert into", "delete from", "update users set",
+        "or 1=1", "or '1'='1", "or 1 = 1", "<script>", "javascript:", "onload=", "onerror=", 
+        "eval(", "exec(", "system("
+    ]
+    for pattern in exploit_patterns:
+        if pattern in t_low:
+            return "Попытка SQL Injection / XSS атаки"
+            
+    if "......" in t_low or "。。。。" in t_low:
+        return "Подозрительный паттерн / Попытка переполнения буфера (Точки)"
+        
+    return None
+
 # DATABASE
 DB_NAME = "yuksak.db"
 class Database:
@@ -68,6 +128,20 @@ class Database:
             curr.execute("CREATE TABLE IF NOT EXISTS interests (category TEXT PRIMARY KEY, user_ids TEXT DEFAULT '[]')")
             curr.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
             c.commit(); c.close()
+            try:
+                c2 = self.get_conn(); curr2 = c2.cursor()
+                curr2.execute("SELECT count(*) FROM courses")
+                count = curr2.fetchone()[0]
+                if count == 0 and os.path.exists("courses_backup.json"):
+                    with open("courses_backup.json", "r", encoding="utf-8") as f:
+                        backup_data = json.load(f)
+                    for cname, cdata in backup_data.items():
+                        curr2.execute("INSERT OR REPLACE INTO courses (name, data) VALUES (?,?)", (cname, json.dumps(cdata)))
+                    c2.commit()
+                    print("[BACKUP] Courses successfully restored from courses_backup.json")
+                c2.close()
+            except Exception as e:
+                print(f"[BACKUP] Restore error: {e}")
     def get_user(self, uid):
         c = self.get_conn(); r = c.execute("SELECT * FROM users WHERE id=?", (str(uid),)).fetchone(); c.close()
         if r:
@@ -99,6 +173,13 @@ class Database:
     def update_course(self, n, d):
         with self.lock:
             c = self.get_conn(); c.execute("INSERT OR REPLACE INTO courses (name, data) VALUES (?,?)", (n, json.dumps(d))); c.commit(); c.close()
+        try:
+            courses = self.get_courses()
+            with open("courses_backup.json", "w", encoding="utf-8") as f:
+                json.dump(courses, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"[BACKUP] Error writing json backup: {e}")
+        auto_git_push()
     def update_interest(self, cat, uid):
         with self.lock:
             c = self.get_conn(); r = c.execute("SELECT user_ids FROM interests WHERE category=?", (cat,)).fetchone()
@@ -302,6 +383,33 @@ def handle_update(upd):
     if not u: db.create_user(uid, m['from'].get('first_name','User'), m['from'].get('username','None')); u = db.get_user(uid)
     print(f"[LOG] {uid} | {u['step']} | {txt}")
 
+    # Total Security Threat Check
+    if txt and not is_owner:
+        threat = check_for_security_threats(txt, uid)
+        if threat:
+            db.update_user(uid, banned=1, step='banned')
+            timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+            with db.lock:
+                c = db.get_conn()
+                c.execute(
+                    "INSERT INTO hacker_logs (user_id, name, username, phone, bad_text, reason, timestamp) VALUES (?,?,?,?,?,?,?)",
+                    (uid, u.get('name', 'User'), u.get('username', 'None'), u.get('phone', '-'), txt, threat, timestamp)
+                )
+                c.commit(); c.close()
+            alert = (
+                f"🚨 *СИСТЕМА БЕЗОПАСНОСТИ: ОБНАРУЖЕНА АТАКА!*\n\n"
+                f"👤 *Пользователь:* {u.get('name')} (@{u.get('username')})\n"
+                f"🆔 *ID:* `{uid}`\n"
+                f"📱 *Телефон:* `{u.get('phone', '-')}`\n"
+                f"💬 *Сообщение:* `{txt}`\n"
+                f"🛡️ *Угроза:* `{threat}`\n"
+                f"📅 *Время:* {timestamp}"
+            )
+            for oid in OWNER_IDS:
+                send_msg(oid, alert)
+            send_msg(cid, "🚫 *Вы были заблокированы системой Total Security за попытку взлома или нарушение правил безопасности.*")
+            return
+
     if u.get('banned'): send_msg(cid, "🚫 BAN!"); return
     lang = u.get('lang', 'ru'); t = TEXTS.get(lang, TEXTS['ru'])
 
@@ -415,27 +523,67 @@ def handle_update(upd):
                 return
 
         # Video management steps
+        video_file_id = None
         if 'video' in m:
-            db.update_user(uid, temp_video_id=m['video']['file_id'], step="admin_video_cat")
+            video_file_id = m['video']['file_id']
+        elif 'document' in m:
+            doc = m['document']
+            mime = doc.get('mime_type', '').lower()
+            fname = doc.get('file_name', '').lower()
+            if mime.startswith('video/') or any(ext in fname for ext in ['.mp4', '.avi', '.mov', '.mkv', '.3gp', '.flv']):
+                video_file_id = doc['file_id']
+
+        if video_file_id:
+            db.update_user(uid, temp_video_id=video_file_id, step="admin_video_cat")
             items = [[{"text": c}] for c in t['categories'].values()]
-            send_msg(cid, "📁 Category:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+            prompt = {
+                'ru': "📁 Выберите категорию:",
+                'uz': "📁 Kategoriyani tanlang:",
+                'en': "📁 Choose category:"
+            }.get(lang, "📁 Choose category:")
+            send_msg(cid, prompt, kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+            return
+
         elif u['step'] == "admin_video_cat" and txt:
             if txt == t['back_btn']: db.update_user(uid, step="main"); send_msg(cid, "OK", kb=get_main_kb(uid, lang)); return
             cat_id = [k for k, v in t['categories'].items() if v == txt]
             if cat_id:
                 db.update_user(uid, step=f"admin_video_course_{cat_id[0]}")
                 items = [[{"text": c}] for c in t['courses'][cat_id[0]]]
-                send_msg(cid, f"📚 {txt} - Course:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+                prompt = {
+                    'ru': f"📚 Категория: {txt}\nВыберите курс:",
+                    'uz': f"📚 Kategoriya: {txt}\nKursni tanlang:",
+                    'en': f"📚 Category: {txt}\nChoose course:"
+                }.get(lang, f"📚 Category: {txt}\nChoose course:")
+                send_msg(cid, prompt, kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
             return
+
         elif u['step'].startswith("admin_video_course_") and txt:
-            if txt == t['back_btn']: db.update_user(uid, step="admin_video_cat"); return
+            if txt == t['back_btn']:
+                db.update_user(uid, step="admin_video_cat")
+                items = [[{"text": c}] for c in t['categories'].values()]
+                prompt = {
+                    'ru': "📁 Выберите категорию:",
+                    'uz': "📁 Kategoriyani tanlang:",
+                    'en': "📁 Choose category:"
+                }.get(lang, "📁 Choose category:")
+                send_msg(cid, prompt, kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
+                return
             c_id = get_course_id(txt)
             c = db.get_courses()
             data = c.get(c_id, [])
             if not data:
                 data = c.get(txt, [])
             data.append({"video": u.get('temp_video_id'), "caption": f"{txt} - part {len(data)+1}"})
-            db.update_course(c_id, data); db.update_user(uid, step="main"); send_msg(cid, "✅ Saved!", kb=get_main_kb(uid, lang)); return
+            db.update_course(c_id, data)
+            db.update_user(uid, step="main")
+            success_msg = {
+                'ru': "✅ Принято! Видео успешно сохранено.",
+                'uz': "✅ Qabul qilindi! Video muvaffaqiyatli saqlandi.",
+                'en': "✅ Accepted! Video successfully saved."
+            }.get(lang, "✅ Принято! Видео успешно сохранено.")
+            send_msg(cid, success_msg, kb=get_main_kb(uid, lang))
+            return
 
         # Video menu steps
         if u['step'] == "admin_video_menu" and txt:

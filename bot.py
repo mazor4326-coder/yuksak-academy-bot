@@ -235,7 +235,7 @@ TEXTS = {
         'agree_btn': "✅ Согласен(а) и принимаю условия",
         'courses_btn': "📚 Мои Курсы", 'subs_btn': "💎 Тарифы", 'ai_btn': "🤖 ИИ Помощник", 'support_btn': "📞 Тех. поддержка", 'founder_btn': "👨‍💼 Основатель", 'back_btn': "⬅️ Назад",
         'access_granted': "Отлично! Вам доступны разделы платформы.",
-        'subs_info': "💎 *ТАРИФЫ (на 1 месяц):*\n\n🥉 **Standard — 60,000 сум**\n(Доступ к 1 курсу на выбор + AI помощник 200 вопросов)\n\n🥈 **Platinum — 120,000 сум**\n(Доступ к 2 курсам на выбор + AI помощник 400 вопросов)\n\n🥇 **VIP — 2,000,000 сум**\n(Доступ КО ВСЕМ курсам навсегда + Личное наставничество + Безлимитный AI)",
+        'subs_info': "💎 *ТАРИФЫ (на 1 месяц):*\n\n🥉 **Standard — 60,000 сум**\n(Доступ к 1 курсу на выбор + AI помощник 200 вопросов)\n\n🥈 **Platinum — 120,000 сум**\n(Доступ к 2 курсам на выбор + AI помощник 400 вопросов)\n\n🥇 **VIP — 2,000,000 сум**\n(Доступ КО ВСЕМ курсам на 1 месяц + AI помощник 5000 вопросов)",
         'ai_welcome': "🤖 Я ваш AI-помощник. Задавайте вопросы!",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование"},
         'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]},
@@ -252,7 +252,7 @@ TEXTS = {
         'agree_btn': "✅ Roziman",
         'courses_btn': "📚 Kurslarim", 'subs_btn': "💎 Tariflar", 'ai_btn': "🤖 AI yordamchi", 'support_btn': "📞 Tex. yordam", 'founder_btn': "👨‍💼 Asoschi", 'back_btn': "⬅️ Orqaga",
         'access_granted': "Platformadan foydalanishingiz mumkin.",
-        'subs_info': "💎 *TARIFLAR (1 oyga):*\n\n🥉 **Standard — 60,000 so'm**\n(1 ta kursga kirish + AI 200 ta savol)\n\n🥈 **Platinum — 120,000 so'm**\n(2 ta kursga kirish + AI 400 ta savol)\n\n🥇 **VIP — 2,000,000 so'm**\n(Barcha kurslar + Shaxsiy ustoz + Limitsiz AI)",
+        'subs_info': "💎 *TARIFLAR (1 oyga):*\n\n🥉 **Standard — 60,000 so'm**\n(1 ta kursga kirish + AI 200 ta savol)\n\n🥈 **Platinum — 120,000 so'm**\n(2 ta kursga kirish + AI 400 ta savol)\n\n🥇 **VIP — 2,000,000 so'm**\n(Barcha kurslarga kirish 1 oyga + AI 5000 ta savol)",
         'ai_welcome': "🤖 Men AI yordamchingizman. Savol bering!",
         'categories': {'prog': "💻 Dasturlash", 'design': "🎨 Dizayn", 'lang': "🌐 Tillar", '3d': "🏗️ 3D Modellashtirish"},
         'courses': {'prog': ["🤖 Telegram botlar", "🌐 Saytlar"], 'design': ["AI orqali dizayn"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"]},
@@ -269,7 +269,7 @@ TEXTS = {
         'agree_btn': "✅ I Agree",
         'courses_btn': "📚 My Courses", 'subs_btn': "💎 Plans", 'ai_btn': "🤖 AI Assistant", 'support_btn': "📞 Support", 'founder_btn': "👨‍💼 Founder", 'back_btn': "⬅️ Back",
         'access_granted': "Welcome!",
-        'subs_info': "💎 *PLANS (per month):*\n\n🥉 **Standard — 60,000 UZS**\n🥈 **Platinum — 120,000 UZS**\n🥇 **VIP — 2,000,000 UZS**",
+        'subs_info': "💎 *PLANS (per month):*\n\n🥉 **Standard — 60,000 UZS**\n(Access to 1 course + AI 200 questions)\n\n🥈 **Platinum — 120,000 UZS**\n(Access to 2 courses + AI 400 questions)\n\n🥇 **VIP — 2,000,000 UZS**\n(Access to ALL courses for 1 month + AI 5000 questions)",
         'ai_welcome': "🤖 I am your AI assistant.",
         'categories': {'prog': "💻 Programming", 'design': "🎨 Design", 'lang': "🌐 Languages", '3d': "🏗️ 3D Modeling"},
         'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"]},
@@ -923,6 +923,28 @@ def handle_update(upd):
                     'en': f"⚠️ *WARNING #{v}/3!*\n\nYou violated bot rules (profanity).\n\n🚫 Remaining warnings: {remaining}\nIf you violate {remaining} more times — your account will be *permanently banned!*"
                 }
                 send_msg(cid, warn_msgs.get(lang, warn_msgs['ru']))
+            return
+
+        # Check AI question limit based on plan
+        ai_limits = {'standard': 200, 'platinum': 400, 'vip': 5000}
+        user_sub = u.get('sub', 'none')
+        ai_limit = ai_limits.get(user_sub, 0)
+        ai_used = u.get('ai_count', 0)
+        if user_sub == 'none':
+            limit_msgs = {
+                'uz': "🔒 AI yordamchidan foydalanish uchun tarifni faollashtiring!",
+                'ru': "🔒 Для использования AI помощника активируйте тариф!",
+                'en': "🔒 To use AI assistant, please activate a plan!"
+            }
+            send_msg(cid, limit_msgs.get(lang, limit_msgs['uz']))
+            return
+        if ai_used >= ai_limit:
+            limit_msgs = {
+                'uz': f"❌ Sizning AI savollar limitingiz tugadi ({ai_limit} ta).\n\nLimitni yangilash uchun yangi oylik tarifni faollashtiring.",
+                'ru': f"❌ Ваш лимит AI вопросов исчерпан ({ai_limit} вопросов).\n\nДля продления активируйте новый ежемесячный тариф.",
+                'en': f"❌ Your AI question limit has been reached ({ai_limit} questions).\n\nTo renew, please activate a new monthly plan."
+            }
+            send_msg(cid, limit_msgs.get(lang, limit_msgs['uz']))
             return
 
         resp = get_ai_resp(txt)

@@ -127,6 +127,37 @@ class Database:
             curr.execute("CREATE TABLE IF NOT EXISTS hacker_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT, username TEXT, phone TEXT, bad_text TEXT, reason TEXT, timestamp TEXT)")
             curr.execute("CREATE TABLE IF NOT EXISTS interests (category TEXT PRIMARY KEY, user_ids TEXT DEFAULT '[]')")
             curr.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
+            
+            # Auto-migration for users table
+            curr.execute("PRAGMA table_info(users)")
+            existing_user_cols = {row[1] for row in curr.fetchall()}
+            user_cols_to_add = {
+                "username": "TEXT",
+                "temp_video_id": "TEXT",
+                "sub_expire": "TEXT"
+            }
+            for col, col_type in user_cols_to_add.items():
+                if col not in existing_user_cols:
+                    curr.execute(f"ALTER TABLE users ADD COLUMN {col} {col_type}")
+                    print(f"[MIGRATION] Added column {col} to users table")
+
+            # Auto-migration for hacker_logs table
+            curr.execute("PRAGMA table_info(hacker_logs)")
+            existing_log_cols = {row[1] for row in curr.fetchall()}
+            log_cols_to_add = {
+                "user_id": "TEXT",
+                "name": "TEXT",
+                "username": "TEXT",
+                "phone": "TEXT",
+                "bad_text": "TEXT",
+                "reason": "TEXT",
+                "timestamp": "TEXT"
+            }
+            for col, col_type in log_cols_to_add.items():
+                if col not in existing_log_cols:
+                    curr.execute(f"ALTER TABLE hacker_logs ADD COLUMN {col} {col_type}")
+                    print(f"[MIGRATION] Added column {col} to hacker_logs table")
+
             c.commit(); c.close()
             try:
                 c2 = self.get_conn(); curr2 = c2.cursor()
@@ -283,6 +314,84 @@ def send_photo(cid, photo_id, caption=None, kb=None):
             return True
         except:
             return False
+
+def send_qr_code(cid, caption, kb=None):
+    # Check if we have a cached file_id in settings
+    cached_id = None
+    try:
+        with db.lock:
+            c = db.get_conn()
+            r = c.execute("SELECT value FROM settings WHERE key='qr_file_id'").fetchone()
+            if r: cached_id = r['value']
+            c.close()
+    except Exception as e:
+        print(f"Error reading qr_file_id from settings: {e}")
+
+    # If we have a cached file_id, try to send it using standard send_photo
+    if cached_id:
+        if send_photo(cid, cached_id, caption=caption, kb=kb):
+            return True
+        # If sending via cached file_id failed, clear it and upload the local file
+        try:
+            with db.lock:
+                c = db.get_conn()
+                c.execute("DELETE FROM settings WHERE key='qr_file_id'")
+                c.commit(); c.close()
+        except:
+            pass
+
+    # Sending local file
+    filepath = "ОПЛАТА ДЛЯ БОТА.jpg"
+    if os.path.exists(filepath):
+        import uuid
+        boundary = f"----WebKitFormBoundary{uuid.uuid4().hex}"
+        try:
+            with open(filepath, 'rb') as f:
+                file_data = f.read()
+        except Exception as e:
+            print(f"Error reading file {filepath}: {e}")
+            return send_msg(cid, caption)
+
+        parts = []
+        parts.append(f"--{boundary}\r\n".encode('utf-8'))
+        parts.append(f'Content-Disposition: form-data; name="chat_id"\r\n\r\n{cid}\r\n'.encode('utf-8'))
+        if caption:
+            parts.append(f"--{boundary}\r\n".encode('utf-8'))
+            parts.append(f'Content-Disposition: form-data; name="caption"\r\n\r\n{caption}\r\n'.encode('utf-8'))
+            parts.append(f"--{boundary}\r\n".encode('utf-8'))
+            parts.append('Content-Disposition: form-data; name="parse_mode"\r\n\r\nMarkdown\r\n'.encode('utf-8'))
+        if kb:
+            parts.append(f"--{boundary}\r\n".encode('utf-8'))
+            parts.append(f'Content-Disposition: form-data; name="reply_markup"\r\n\r\n{json.dumps(kb)}\r\n'.encode('utf-8'))
+        parts.append(f"--{boundary}\r\n".encode('utf-8'))
+        parts.append(f'Content-Disposition: form-data; name="photo"; filename="{os.path.basename(filepath)}"\r\n'.encode('utf-8'))
+        parts.append(b'Content-Type: image/jpeg\r\n\r\n')
+        parts.append(file_data)
+        parts.append(b'\r\n')
+        parts.append(f"--{boundary}--\r\n".encode('utf-8'))
+        
+        body = b''.join(parts)
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
+        req = urllib.request.Request(url, data=body)
+        req.add_header('Content-Type', f'multipart/form-data; boundary={boundary}')
+        
+        try:
+            with urllib.request.urlopen(req) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
+                if res_data.get('ok'):
+                    new_file_id = res_data['result']['photo'][-1]['file_id']
+                    try:
+                        with db.lock:
+                            c = db.get_conn()
+                            c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('qr_file_id', ?)", (new_file_id,))
+                            c.commit(); c.close()
+                    except Exception as ce:
+                        print(f"Error caching qr_file_id: {ce}")
+                    return True
+        except Exception as e:
+            print(f"Error sending local photo: {e}")
+            
+    return send_msg(cid, caption)
 
 def send_vid(cid, vid, cap=None, kb=None):
     is_owner = str(cid) in OWNER_IDS
@@ -754,7 +863,17 @@ def handle_update(upd):
         card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)"
         plan = txt.lower()
         db.update_user(uid, step=f"awaiting_payment||{plan}")
-        send_msg(cid, f"{card}\n\n📸 To'lov chekini yuboring.")
+        
+        # Determine correct translated caption based on user's language setting
+        caption_dict = {
+            'uz': f"{card}\n\n📸 To'lov chekini (skrinshot yoki rasm) yuboring.",
+            'ru': f"{card}\n\n📸 Отправьте скриншот или фото чека об оплате.",
+            'en': f"{card}\n\n📸 Please send a screenshot or photo of the payment receipt."
+        }
+        caption = caption_dict.get(lang, caption_dict['uz'])
+        
+        # Send QR Code with translated caption
+        send_qr_code(cid, caption)
         
         # Admin notification
         tariff_emoji = "🥉 Standard" if txt == "Standard" else ("🥈 Platinum" if txt == "Platinum" else "🥇 VIP")

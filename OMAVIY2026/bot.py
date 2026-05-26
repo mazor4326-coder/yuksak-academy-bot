@@ -165,18 +165,18 @@ TEXTS = {
         'change_lang_btn': "🌐 Изменить язык",
         'back_btn': "⬅️ Назад",
         'no_photo_btn': "❌ Без фото",
-        'publish_btn': "🚀 Опубликовать в группы",
+        'publish_btn': "🚀 Опубликовать в группы/каналы",
         'sub_active': "✅ Активна (до {expire})",
         'sub_none': "❌ Отсутствует",
         'profile_txt': "👤 *Ваш профиль:*\n\n📞 Телефон: `{phone}`\n💎 Подписка: *{sub}*\n📣 Всего объявлений: `{ads_count}`",
         'buy_sub_txt': "💳 *КУПИТЬ ПОДПИСКУ (20,000 сум / 30 дней)*\n\nДля оплаты переведите средства на одну из карт:\n\n💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n\n📸 *После оплаты обязательно отправьте сюда скриншот или фото чека.* Наш администратор проверит платеж и активирует вам подписку.",
         'no_sub_warn': "🔒 Размещение рекламы доступно только пользователям с активной подпиской.\n\nПожалуйста, перейдите в раздел «💳 Купить подписку» для активации.",
-        'create_ad_txt': "✍️ *Введите текст вашего объявления:*\n\nОно будет отправлено во все наши группы рекламы.",
+        'create_ad_txt': "✍️ *Введите текст вашего объявления:*\n\nОно будет отправлено во все наши группы и каналы рекламы.",
         'create_ad_photo': "📸 *Отправьте изображение для вашего объявления:*\n\nЕсли фото не требуется, нажмите кнопку ниже.",
-        'ad_preview': "📝 *Предпросмотр объявления:*\n\n{text}\n\nХотите опубликовать его в группы?",
-        'ad_posted_success': "🚀 Ваше объявление успешно разослано во все группы!",
+        'ad_preview': "📝 *Предпросмотр объявления:*\n\n{text}\n\nХотите опубликовать его?",
+        'ad_posted_success': "🚀 Ваше объявление успешно разослано во все группы и каналы!",
         'payment_pending': "✅ Ваша квитанция отправлена администратору на проверку. Мы уведомим вас об активации подписки!",
-        'group_not_found': "Не найдено активных групп для размещения объявлений. Пожалуйста, свяжитесь с поддержкой."
+        'group_not_found': "Не найдено активных групп или каналов для размещения объявлений. Пожалуйста, свяжитесь с поддержкой."
     },
     'uz': {
         'welcome': "Assalomu alaykum! Ommaviy reklama botimizga xush kelibsiz.",
@@ -189,18 +189,18 @@ TEXTS = {
         'change_lang_btn': "🌐 Tilni o'zgartirish",
         'back_btn': "⬅️ Orqaga",
         'no_photo_btn': "❌ Rasm yo'q",
-        'publish_btn': "🚀 Guruhlarga yuklash",
+        'publish_btn': "🚀 Guruh va kanallarga yuklash",
         'sub_active': "✅ Faol ({expire} gacha)",
         'sub_none': "❌ Mavjud emas",
         'profile_txt': "👤 *Sizning profilingiz:*\n\n📞 Telefon: `{phone}`\n💎 Obuna: *{sub}*\n📣 Jami e'lonlar: `{ads_count}`",
         'buy_sub_txt': "💳 *OBUNA SOTIB OLISH (20 000 so'm / 30 kun)*\n\nTo'lov uchun quyidagi kartalardan biriga pul o'tkazing:\n\n💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n\n📸 *To'lovdan so'ng skrinshot yoki rasm (chek)ni yuboring.* Administrator to'lovni tekshirib, obunangizni faollashtiradi.",
         'no_sub_warn': "🔒 E'lon joylashtirish faqat faol obunaga ega foydalanuvchilar uchun ruxsat etiladi.\n\nIltimos, faollashtirish uchun «💳 Obuna sotib olish» bo'limiga o'ting.",
-        'create_ad_txt': "✍️ *E'loningiz matnini kiriting:*\n\nU barcha reklama guruhlariga yuboriladi.",
+        'create_ad_txt': "✍️ *E'loningiz matnini kiriting:*\n\nU barcha reklama guruhlari va kanallariga yuboriladi.",
         'create_ad_photo': "📸 *E'lon uchun rasm yuboring:*\n\nAgar rasm kerak bo'lmasa, quyidagi tugmani bosing.",
-        'ad_preview': "📝 *E'lonning ko'rinishi:*\n\n{text}\n\nUshbu e'lonni guruhlarga joylashtirishni xohlaysizmi?",
-        'ad_posted_success': "🚀 E'loningiz barcha guruhlarga muvaffaqiyatli yuborildi!",
+        'ad_preview': "📝 *E'lonning ko'rinishi:*\n\n{text}\n\nUshbu e'lonni guruh va kanallarga joylashtirishni xohlaysizmi?",
+        'ad_posted_success': "🚀 E'loningiz barcha guruh va kanallarga muvaffaqiyatli yuborildi!",
         'payment_pending': "✅ Chekingiz administratorga tekshirish uchun yuborildi. Obuna faollashishi bilanoq sizga xabar beramiz!",
-        'group_not_found': "E'lon joylashtirish uchun faol guruhlar topilmadi. Iltimos, qo'llab-quvvatlash xizmatiga murojaat qiling."
+        'group_not_found': "E'lon joylashtirish uchun faol guruhlar yoki kanallar topilmadi. Iltimos, qo'llab-quvvatlash xizmatiga murojaat qiling."
     }
 }
 
@@ -256,12 +256,12 @@ def get_main_kb(uid, lang, is_owner):
 def get_admin_kb():
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row("📊 Статистика", "📢 Рассылка")
-    kb.row("👥 Управление группами", "⬅️ В меню")
+    kb.row("👥 Группы и Каналы", "⬅️ В меню")
     return kb
 
 def get_groups_mgmt_kb():
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row("➕ Добавить группу", "🗑️ Список/Удалить группу")
+    kb.row("➕ Добавить группу/канал", "🗑️ Список/Удалить")
     kb.row("⬅️ Назад")
     return kb
 
@@ -375,9 +375,9 @@ def handle_all_messages(m):
                 bot.send_message(cid, "📢 *Отправьте сообщение для рассылки (текст или фото с описанием):*", parse_mode='Markdown', reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("⬅️ Назад"))
                 return
 
-            elif m.text == "👥 Управление группами":
+            elif m.text == "👥 Группы и Каналы":
                 db.update_user(uid, step='admin_groups_mgmt')
-                bot.send_message(cid, "👥 *Управление целевыми группами:*", parse_mode='Markdown', reply_markup=get_groups_mgmt_kb())
+                bot.send_message(cid, "👥 *Управление целевыми группами и каналами:*", parse_mode='Markdown', reply_markup=get_groups_mgmt_kb())
                 return
 
         elif step == 'admin_groups_mgmt':
@@ -386,19 +386,19 @@ def handle_all_messages(m):
                 bot.send_message(cid, "🛠️ *Панель администратора*", parse_mode='Markdown', reply_markup=get_admin_kb())
                 return
 
-            elif m.text == "➕ Добавить группу":
+            elif m.text == "➕ Добавить группу/канал":
                 db.update_user(uid, step='admin_add_group')
-                bot.send_message(cid, "➕ *Добавление группы:*\n\nОтправьте ID группы (начинается с `-`) или перешлите сообщение из этой группы:", parse_mode='Markdown', reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("⬅️ Назад"))
+                bot.send_message(cid, "➕ *Добавление группы или канала:*\n\nОтправьте ID (начинается с `-100` для супергрупп/каналов) или юзернейм (например, `@mychannel`), либо перешлите пост из канала / сообщение из группы:", parse_mode='Markdown', reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("⬅️ Назад"))
                 return
 
-            elif m.text == "🗑️ Список/Удалить группу":
+            elif m.text == "🗑️ Список/Удалить":
                 groups = db.get_groups()
                 if not groups:
-                    bot.send_message(cid, "📭 Список групп пуст.", reply_markup=get_groups_mgmt_kb())
+                    bot.send_message(cid, "📭 Список пуст.", reply_markup=get_groups_mgmt_kb())
                     return
 
                 markup = types.InlineKeyboardMarkup()
-                text_lines = ["📋 *Список групп:*"]
+                text_lines = ["📋 *Список групп и каналов:*"]
                 for i, g in enumerate(groups):
                     title = g['title']
                     gid = g['chat_id']
@@ -411,7 +411,7 @@ def handle_all_messages(m):
         elif step == 'admin_add_group':
             if m.text == "⬅️ Назад":
                 db.update_user(uid, step='admin_groups_mgmt')
-                bot.send_message(cid, "👥 *Управление целевыми группами:*", parse_mode='Markdown', reply_markup=get_groups_mgmt_kb())
+                bot.send_message(cid, "👥 *Управление целевыми группами и каналами:*", parse_mode='Markdown', reply_markup=get_groups_mgmt_kb())
                 return
 
             chat_id = None
@@ -439,10 +439,10 @@ def handle_all_messages(m):
                     chat_id = chat_info.id
                     title = chat_info.title or chat_info.username or str(chat_id)
                     db.add_group(chat_id, title)
-                    bot.send_message(cid, f"✅ Группа успешно добавлена!\n📌 Название: *{title}*\n🆔 ID: `{chat_id}`", parse_mode='Markdown', reply_markup=get_groups_mgmt_kb())
+                    bot.send_message(cid, f"✅ Успешно добавлено!\n📌 Название: *{title}*\n🆔 ID: `{chat_id}`", parse_mode='Markdown', reply_markup=get_groups_mgmt_kb())
                     db.update_user(uid, step='admin_groups_mgmt')
                 except Exception as e:
-                    bot.send_message(cid, f"❌ Ошибка добавления чата: {e}\n\nУбедитесь, что бот является участником/администратором этой группы.")
+                    bot.send_message(cid, f"❌ Ошибка добавления: {e}\n\nУбедитесь, что бот является участником/администратором этой группы или канала.")
             return
 
         elif step == 'admin_broadcast':
@@ -640,8 +640,8 @@ def handle_callbacks(call):
     if data.startswith("del_grp_") and is_owner:
         gid = data.replace("del_grp_", "")
         db.remove_group(gid)
-        bot.answer_callback_query(call.id, "Группа удалена")
-        bot.edit_message_text(f"✅ Группа с ID {gid} удалена из списка автопостинга.", chat_id=cid, message_id=call.message.message_id)
+        bot.answer_callback_query(call.id, "Удалено успешно")
+        bot.edit_message_text(f"✅ Группа/канал с ID {gid} удален из списка автопостинга.", chat_id=cid, message_id=call.message.message_id)
 
     # Subscription approvals
     elif data.startswith("sub_approve_") and is_owner:

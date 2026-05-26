@@ -681,5 +681,10 @@ def handle_callbacks(call):
 
 if __name__ == "__main__":
     keep_alive()
+    print("[BOT] Removing webhook...")
+    try:
+        bot.remove_webhook()
+    except Exception as e:
+        print(f"[BOT] Error removing webhook: {e}")
     print("[BOT] Starting polling...")
     bot.infinity_polling(timeout=20, long_polling_timeout=15)

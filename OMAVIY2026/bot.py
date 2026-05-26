@@ -341,7 +341,7 @@ def handle_all_messages(m):
         return
 
     # Admin Panel invocation
-    if m.text == "/admin" or (m.text == "🛠️ Admin panel" and is_owner):
+    if (m.text == "/admin" or m.text == "🛠️ Admin panel") and is_owner:
         db.update_user(uid, step='admin_main')
         bot.send_message(cid, "🛠️ *Панель администратора*", parse_mode='Markdown', reply_markup=get_admin_kb())
         return

@@ -155,7 +155,7 @@ db = Database(DB_NAME)
 # LOCALISED TEXTS
 TEXTS = {
     'ru': {
-        'welcome': "Assalomu alaykum! Добро пожаловать в рекламный бот OMAVIY2026. Вы можете приобрести подписку за 20 000 сум в месяц и публиковать свои объявления в партнерские телеграм-группы прямо через этого бота.",
+        'welcome': "Assalomu alaykum! Добро пожаловать в наш бот массовой рекламы.",
         'req_contact': "Пожалуйста, поделитесь вашим номером телефона для регистрации.",
         'thanks_reg': "Спасибо за регистрацию! Теперь вам доступно главное меню.",
         'main_menu': "🏠 Главное меню:",
@@ -179,7 +179,7 @@ TEXTS = {
         'group_not_found': "Не найдено активных групп для размещения объявлений. Пожалуйста, свяжитесь с поддержкой."
     },
     'uz': {
-        'welcome': "Assalomu alaykum! OMAVIY2026 reklama botimizga xush kelibsiz. Oyiga 20 000 so'm evaziga obuna sotib olib, o'z e'lonlaringizni to'g'ridan-to'g'ri hamkor telegram guruhlariga joylashtirishingiz mumkin.",
+        'welcome': "Assalomu alaykum! Ommaviy reklama botimizga xush kelibsiz.",
         'req_contact': "Ro'yxatdan o'tish uchun telefon raqamingizni yuboring.",
         'thanks_reg': "Ro'yxatdan o'tganingiz uchun tashakkur! Endi siz bosh menyudan foydalanishingiz mumkin.",
         'main_menu': "🏠 Bosh menyu:",

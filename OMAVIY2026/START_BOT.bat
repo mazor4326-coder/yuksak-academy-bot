@@ -22,12 +22,14 @@ if exist bot.pid (
 :: Find python executable path
 set "PYTHON_EXE="
 
-if exist "C:\Temp\python_embed\python.exe" (
-    set "PYTHON_EXE=C:\Temp\python_embed\python.exe"
+if exist "C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe" (
+    set "PYTHON_EXE=C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe"
 ) else (
     python --version >nul 2>&1
     if %errorlevel% equ 0 (
         set "PYTHON_EXE=python"
+    ) else if exist "C:\Temp\python_embed\python.exe" (
+        set "PYTHON_EXE=C:\Temp\python_embed\python.exe"
     )
 )
 

@@ -859,7 +859,7 @@ def handle_update(upd):
                 send_msg(cid, "OK", kb=get_main_kb(uid, lang))
                 return
 
-    if txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
+    if u.get('step') == 'lang' and txt in ["🇺🇿 O'zbekcha", "🇷🇺 Русский", "🇺🇸 English"]:
         l = 'uz' if "O'z" in txt else ('ru' if "Рус" in txt else 'en')
         db.update_user(uid, lang=l, step="contact")
         send_msg(cid, TEXTS[l]['welcome']); send_msg(cid, TEXTS[l]['req_contact'], kb={"keyboard": [[{"text": TEXTS[l]['contact_btn'], "request_contact": True}]], "resize_keyboard": True}); return

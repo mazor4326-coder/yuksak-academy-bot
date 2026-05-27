@@ -238,7 +238,7 @@ TEXTS = {
         'subs_info': "💎 *ТАРИФЫ (на 1 месяц):*\n\n🥉 **Standard — 60,000 сум**\n(Доступ к 1 курсу на выбор + AI помощник 200 вопросов)\n\n🥈 **Platinum — 120,000 сум**\n(Доступ к 2 курсам на выбор + AI помощник 400 вопросов)\n\n🥇 **VIP — 2,000,000 сум**\n(Доступ КО ВСЕМ курсам на 1 месяц + AI помощник 5000 вопросов)",
         'ai_welcome': "🤖 Я ваш AI-помощник. Задавайте вопросы!",
         'categories': {'prog': "💻 Программирование", 'design': "🎨 Дизайн", 'lang': "🌐 Языки", '3d': "🏗️ 3D Моделирование"},
-        'courses': {'prog': ["🤖 Создание телеграм ботов", "🌐 Создание сайтов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]},
+        'courses': {'prog': ["🤖 Создание телеграм ботов"], 'design': ["Создать дизайн через ИИ"], 'lang': ["🇺🇸 Английский", "🇷🇺 Русский"], '3d': ["⚙️ SolidWorks"]},
         'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
         'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak\\_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     },
@@ -255,7 +255,7 @@ TEXTS = {
         'subs_info': "💎 *TARIFLAR (1 oyga):*\n\n🥉 **Standard — 60,000 so'm**\n(1 ta kursga kirish + AI 200 ta savol)\n\n🥈 **Platinum — 120,000 so'm**\n(2 ta kursga kirish + AI 400 ta savol)\n\n🥇 **VIP — 2,000,000 so'm**\n(Barcha kurslarga kirish 1 oyga + AI 5000 ta savol)",
         'ai_welcome': "🤖 Men AI yordamchingizman. Savol bering!",
         'categories': {'prog': "💻 Dasturlash", 'design': "🎨 Dizayn", 'lang': "🌐 Tillar", '3d': "🏗️ 3D Modellashtirish"},
-        'courses': {'prog': ["🤖 Telegram botlar", "🌐 Saytlar"], 'design': ["AI orqali dizayn"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"]},
+        'courses': {'prog': ["🤖 Telegram botlar"], 'design': ["AI orqali dizayn"], 'lang': ["🇺🇸 Ingliz tili", "🇷🇺 Rus tili"], '3d': ["⚙️ SolidWorks"]},
         'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
         'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak\\_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     },
@@ -272,7 +272,7 @@ TEXTS = {
         'subs_info': "💎 *PLANS (per month):*\n\n🥉 **Standard — 60,000 UZS**\n(Access to 1 course + AI 200 questions)\n\n🥈 **Platinum — 120,000 UZS**\n(Access to 2 courses + AI 400 questions)\n\n🥇 **VIP — 2,000,000 UZS**\n(Access to ALL courses for 1 month + AI 5000 questions)",
         'ai_welcome': "🤖 I am your AI assistant.",
         'categories': {'prog': "💻 Programming", 'design': "🎨 Design", 'lang': "🌐 Languages", '3d': "🏗️ 3D Modeling"},
-        'courses': {'prog': ["🤖 Telegram bots", "🌐 Web design"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"]},
+        'courses': {'prog': ["🤖 Telegram bots"], 'design': ["Create design via AI"], 'lang': ["🇺🇸 English", "🇷🇺 Russian"], '3d': ["⚙️ SolidWorks"]},
         'founder_txt': "👨‍💼 Kamolov Abdulaziz Sherzodbekovich\nXalqaro darajali muhandis & IT-tadbirkor\n\n📚 Ta'lim va malaka:\n🎓 Xalqaro qo'sh diplom (O'zbekiston & Belarus)\n• Belarus milliy texnika universiteti (BNTU), Minsk sh.\n• Andijon mashinasozlik instituti (AndMI)\n• Yo'nalish: «Intellektual asboblar va ishlab chiqarish mashinalari»\n• Format: Birgalikdagi xalqaro dastur, kredit-modul tizimi\n• Asosiy tayyorgarlik: 9 yil rus sinfida + 2 yil akademik litsey\n\n💼 Kasbiy tajriba:\n🏆 «Yuksak Academy» asoschisi — ta'lim platformasini ishlab chiquvchi va rahbari\n🎓 Maxsus fanlar o'qituvchisi (Mashina va mexanizmlar qurilishi)\n🏭 Xalqaro kompaniya UZ DONGWON da muhandislik amaliyoti",
         'support_txt': "📞 Qo'llab-quvvatlash:\n\n📱 Telegram: @yuksak\\_it\n📞 Tel: +998 50 777 51 52\n\n⚠️ Iltimos, mayda-chuyda narsalar uchun qo'ng'iroq qilmang."
     }

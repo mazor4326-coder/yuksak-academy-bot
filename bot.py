@@ -44,6 +44,14 @@ def detect_profanity(text):
         if w in t: return True
     return False
 
+def fmt_username(un):
+    if not un or str(un).strip().lower() in ['none', 'null', '']:
+        return "нет"
+    un_str = str(un).strip()
+    if un_str.startswith('@'):
+        return un_str
+    return f"@{un_str}"
+
 def auto_git_push():
     def task():
         try:
@@ -518,7 +526,7 @@ def handle_update(upd):
                 c.commit(); c.close()
             alert = (
                 f"🚨 *СИСТЕМА БЕЗОПАСНОСТИ: ОБНАРУЖЕНА АТАКА!*\n\n"
-                f"👤 *Пользователь:* {u.get('name')} (@{u.get('username')})\n"
+                f"👤 *Пользователь:* {u.get('name')} ({fmt_username(u.get('username'))})\n"
                 f"🆔 *ID:* `{uid}`\n"
                 f"📱 *Телефон:* `{u.get('phone', '-')}`\n"
                 f"💬 *Сообщение:* `{txt}`\n"
@@ -612,7 +620,7 @@ def handle_update(upd):
                 if found:
                     viol = found.get('violations', 0)
                     ban_status = "Ha" if found.get('banned') else "Yo'q"
-                    send_msg(cid, f"✅ *TOPILDI:*\n\n👤 {found.get('name','?')}\n🆔 `{found.get('id','?')}`\n📞 `{found.get('phone','?')}`\n👤 @{found.get('username','?')}\n💎 Tarif: {found.get('sub','none')}\n⚠️ Buzarliklar: {viol}\n🚫 Ban: {ban_status}")
+                    send_msg(cid, f"✅ *TOPILDI:*\n\n👤 {found.get('name','?')}\n🆔 `{found.get('id','?')}`\n📞 `{found.get('phone','?')}`\n👤 {fmt_username(found.get('username'))}\n💎 Tarif: {found.get('sub','none')}\n⚠️ Buzarliklar: {viol}\n🚫 Ban: {ban_status}")
                 else:
                     send_msg(cid, "❌ Foydalanuvchi topilmadi. ID, +998... yoki @username to'g'ri kiriting.")
                 return
@@ -790,7 +798,7 @@ def handle_update(upd):
                 logs = db.get_hacker_logs()
                 if not logs: send_msg(cid, "✅ Атак не было.")
                 else:
-                    res = [f"🚨 {l['name']} (@{l['username']}) — {l['reason']}" for l in logs[:10]]
+                    res = [f"🚨 {l['name']} ({fmt_username(l['username'])}) — {l['reason']}" for l in logs[:10]]
                     send_msg(cid, "🚨 *АТАКИ (кратко):*\n\n" + "\n".join(res))
                 return
             elif txt == "🔍 Атака детально":
@@ -798,7 +806,7 @@ def handle_update(upd):
                 if not logs: send_msg(cid, "✅ Чисто.")
                 else:
                     for l in logs[:5]:
-                        send_msg(cid, f"🚨 *АТАКА:*\n👤 {l['name']} (@{l['username']})\n🆔 `{l['user_id']}`\n📞 `{l['phone']}`\n💬 `{l['bad_text']}`\n🛡️ {l['reason']}\n📅 {l['timestamp']}")
+                        send_msg(cid, f"🚨 *АТАКА:*\n👤 {l['name']} ({fmt_username(l['username'])})\n🆔 `{l['user_id']}`\n📞 `{l['phone']}`\n💬 `{l['bad_text']}`\n🛡️ {l['reason']}\n📅 {l['timestamp']}")
                 return
             elif txt == "📈 Аналитика":
                 all_u = list(db.get_all_users().values())
@@ -888,7 +896,7 @@ def handle_update(upd):
         
         # Admin notification
         tariff_emoji = "🥉 Standard" if txt == "Standard" else ("🥈 Platinum" if txt == "Platinum" else "🥇 VIP")
-        alert = f"🔔 YANGI TO'LOV SO'ROVI!\n\n👤 Foydalanuvchi: {u.get('name')} (@{u.get('username')})\n🆔 ID: {uid}\n📱 Telefon: {u.get('phone')}\n💰 Tarif: {tariff_emoji}"
+        alert = f"🔔 YANGI TO'LOV SO'ROVI!\n\n👤 Foydalanuvchi: {u.get('name')} ({fmt_username(u.get('username'))})\n🆔 ID: {uid}\n📱 Telefon: {u.get('phone')}\n💰 Tarif: {tariff_emoji}"
         for oid in OWNER_IDS:
             send_msg(oid, alert)
         return
@@ -896,7 +904,7 @@ def handle_update(upd):
     if 'photo' in m and not is_owner:
         if u.get('step', '').startswith("awaiting_payment||"):
             plan = u['step'].split("||")[1]
-            caption = f"📸 YANGI CHEK KELDI!\n\n👤 Foydalanuvchi: {u.get('name')} (@{u.get('username')})\n🆔 ID: {uid}\n📱 Telefon: {u.get('phone')}\n💰 Status: To'lov cheki yuborildi."
+            caption = f"📸 YANGI CHEK KELDI!\n\n👤 Foydalanuvchi: {u.get('name')} ({fmt_username(u.get('username'))})\n🆔 ID: {uid}\n📱 Telefon: {u.get('phone')}\n💰 Status: To'lov cheki yuborildi."
             kb = {"inline_keyboard": [[
                 {"text": "✅ OK", "callback_data": f"adm_pay_ok_{plan}_{uid}"},
                 {"text": "❌ NO", "callback_data": f"adm_pay_no_{plan}_{uid}"},
@@ -930,7 +938,7 @@ def handle_update(upd):
             if v >= 3:
                 db.update_user(uid, banned=1)
                 # Notify admin
-                alert = f"🚨 *BAN:* {u.get('name')} (@{u.get('username')})\n🆔 `{uid}`\n💬 `{txt}`\n📌 So'kindi → BAN"
+                alert = f"🚨 *BAN:* {u.get('name')} ({fmt_username(u.get('username'))})\n🆔 `{uid}`\n💬 `{txt}`\n📌 So'kindi → BAN"
                 for oid in OWNER_IDS: send_msg(oid, alert)
                 send_msg(cid, "🚫 BAN!")
             else:

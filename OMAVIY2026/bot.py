@@ -62,6 +62,14 @@ class Database:
         with self.lock:
             conn = self.get_conn()
             curr = conn.cursor()
+            
+            # Try to add is_banned to users table if it doesn't exist
+            try:
+                curr.execute("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0")
+                conn.commit()
+            except sqlite3.OperationalError:
+                pass
+
             curr.execute("""CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
                 name TEXT,
@@ -70,7 +78,8 @@ class Database:
                 lang TEXT,
                 sub_status TEXT DEFAULT 'none',
                 sub_expire TEXT,
-                step TEXT
+                step TEXT,
+                is_banned INTEGER DEFAULT 0
             )""")
             curr.execute("""CREATE TABLE IF NOT EXISTS ads (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,8 +93,59 @@ class Database:
                 chat_id TEXT PRIMARY KEY,
                 title TEXT
             )""")
+            curr.execute("""CREATE TABLE IF NOT EXISTS payments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                amount REAL,
+                created_at TEXT
+            )""")
             conn.commit()
             conn.close()
+
+    def is_user_banned(self, uid):
+        conn = self.get_conn()
+        r = conn.execute("SELECT is_banned FROM users WHERE id=?", (str(uid),)).fetchone()
+        conn.close()
+        return bool(r['is_banned']) if r else False
+
+    def ban_user(self, uid):
+        with self.lock:
+            conn = self.get_conn()
+            conn.execute("UPDATE users SET is_banned=1 WHERE id=?", (str(uid),))
+            conn.commit()
+            conn.close()
+
+    def add_payment(self, user_id, amount):
+        with self.lock:
+            conn = self.get_conn()
+            conn.execute("INSERT INTO payments (user_id, amount, created_at) VALUES (?, ?, ?)",
+                         (str(user_id), float(amount), time.strftime('%Y-%m-%d %H:%M:%S')))
+            conn.commit()
+            conn.close()
+
+    def get_finance_stats(self):
+        conn = self.get_conn()
+        # Today
+        today_str = time.strftime('%Y-%m-%d')
+        r_today = conn.execute("SELECT SUM(amount) FROM payments WHERE created_at LIKE ?", (f"{today_str}%",)).fetchone()
+        today = r_today[0] if r_today and r_today[0] is not None else 0.0
+
+        # Week (7 days ago)
+        seven_days_ago = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() - 7*86400))
+        r_week = conn.execute("SELECT SUM(amount) FROM payments WHERE created_at >= ?", (seven_days_ago,)).fetchone()
+        week = r_week[0] if r_week and r_week[0] is not None else 0.0
+
+        # Month (30 days ago)
+        thirty_days_ago = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() - 30*86400))
+        r_month = conn.execute("SELECT SUM(amount) FROM payments WHERE created_at >= ?", (thirty_days_ago,)).fetchone()
+        month = r_month[0] if r_month and r_month[0] is not None else 0.0
+
+        conn.close()
+        return {
+            'today': today,
+            'week': week,
+            'month': month
+        }
 
     def get_user(self, uid):
         conn = self.get_conn()
@@ -135,12 +195,27 @@ class Database:
         conn.close()
         return [dict(r) for r in rows]
 
-    def add_ad(self, user_id, text, photo):
+    def add_ad(self, user_id, text, photo, status='pending'):
         with self.lock:
             conn = self.get_conn()
             curr = conn.cursor()
-            curr.execute("INSERT INTO ads (user_id, text, photo, created_at) VALUES (?,?,?,?)",
-                         (str(user_id), text, photo, time.strftime('%Y-%m-%d %H:%M:%S')))
+            curr.execute("INSERT INTO ads (user_id, text, photo, status, created_at) VALUES (?,?,?,?,?)",
+                         (str(user_id), text, photo, status, time.strftime('%Y-%m-%d %H:%M:%S')))
+            row_id = curr.lastrowid
+            conn.commit()
+            conn.close()
+            return row_id
+
+    def get_ad(self, ad_id):
+        conn = self.get_conn()
+        r = conn.execute("SELECT * FROM ads WHERE id=?", (int(ad_id),)).fetchone()
+        conn.close()
+        return dict(r) if r else None
+
+    def update_ad_status(self, ad_id, status):
+        with self.lock:
+            conn = self.get_conn()
+            conn.execute("UPDATE ads SET status=? WHERE id=?", (status, int(ad_id)))
             conn.commit()
             conn.close()
 
@@ -255,7 +330,7 @@ def get_main_kb(uid, lang, is_owner):
 
 def get_admin_kb():
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row("📊 Статистика", "📢 Рассылка")
+    kb.row("📊 Статистика", "💰 Финансы", "📢 Рассылка")
     kb.row("👥 Группы и Каналы", "⬅️ В меню")
     return kb
 
@@ -297,6 +372,12 @@ def post_ad_to_all_groups(user_id, text, photo_id):
 @bot.message_handler(commands=['start'])
 def start_cmd(m):
     uid = str(m.from_user.id)
+    if db.is_user_banned(uid):
+        try:
+            bot.send_message(m.chat.id, "⚠️ Вы заблокированы в этом боте. / Siz ushbu botda bloklangansiz.")
+        except:
+            pass
+        return
     db.create_user(uid, m.from_user.first_name or "User", m.from_user.username or "None")
     db.update_user(uid, step='lang')
     bot.send_message(m.chat.id, "Tilni tanlang / Выберите язык:", reply_markup=get_lang_kb())
@@ -305,6 +386,15 @@ def start_cmd(m):
 @bot.message_handler(func=lambda message: True, content_types=['text', 'contact', 'photo'])
 def handle_all_messages(m):
     uid = str(m.from_user.id)
+    if db.is_user_banned(uid):
+        u = db.get_user(uid)
+        lang = u.get('lang', 'ru') if u else 'ru'
+        msg = "⚠️ Вы заблокированы в этом боте." if lang == 'ru' else "⚠️ Siz ushbu botda bloklangansiz."
+        try:
+            bot.send_message(m.chat.id, msg)
+        except:
+            pass
+        return
     u = db.get_user(uid)
     if not u:
         db.create_user(uid, m.from_user.first_name or "User", m.from_user.username or "None")
@@ -361,13 +451,29 @@ def handle_all_messages(m):
                 active_subs = len([x for x in users if x.get('sub_status') == 'active'])
                 total_groups = len(groups)
 
+                groups_lines = []
+                for i, g in enumerate(groups):
+                    groups_lines.append(f"🔹 {g['title']} (ID: `{g['chat_id']}`)")
+                groups_list_str = "\n".join(groups_lines) if groups_lines else "❌ Нет подключенных групп"
+
                 stats_msg = (
                     f"📊 *СТАТИСТИКА БОТА:*\n\n"
                     f"👥 Всего пользователей: `{total_users}`\n"
-                    f"💎 Активных подписок: `{active_subs}`\n"
-                    f"📢 Целевых групп: `{total_groups}`"
+                    f"💎 Активных подписок: `{active_subs}`\n\n"
+                    f"📢 *Список целевых групп ({total_groups}):*\n{groups_list_str}"
                 )
                 bot.send_message(cid, stats_msg, parse_mode='Markdown', reply_markup=get_admin_kb())
+                return
+
+            elif m.text == "💰 Финансы":
+                stats = db.get_finance_stats()
+                fin_msg = (
+                    f"💰 *ФИНАНСОВАЯ СТАТИСТИКА БОТА:*\n\n"
+                    f"📅 За сегодня: `{stats['today']:,.0f} сум`\n"
+                    f"📅 За неделю (7 дней): `{stats['week']:,.0f} сум`\n"
+                    f"📅 За месяц (30 дней): `{stats['month']:,.0f} сум`"
+                )
+                bot.send_message(cid, fin_msg, parse_mode='Markdown', reply_markup=get_admin_kb())
                 return
 
             elif m.text == "📢 Рассылка":
@@ -501,7 +607,12 @@ def handle_all_messages(m):
     # Buy Subscription
     if m.text == TEXTS[lang]['buy_sub_btn']:
         db.update_user(uid, step='awaiting_payment')
-        bot.send_message(cid, TEXTS[lang]['buy_sub_txt'], parse_mode='Markdown', reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add(TEXTS[lang]['back_btn']))
+        photo_path = "ОПЛАТА ДЛЯ БОТА.jpg"
+        if os.path.exists(photo_path):
+            with open(photo_path, 'rb') as photo:
+                bot.send_photo(cid, photo, caption=TEXTS[lang]['buy_sub_txt'], parse_mode='Markdown', reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add(TEXTS[lang]['back_btn']))
+        else:
+            bot.send_message(cid, TEXTS[lang]['buy_sub_txt'], parse_mode='Markdown', reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add(TEXTS[lang]['back_btn']))
         return
 
     # Handle Payment Photo Upload
@@ -511,7 +622,8 @@ def handle_all_messages(m):
         markup = types.InlineKeyboardMarkup()
         markup.row(
             types.InlineKeyboardButton("✅ Одобрить", callback_data=f"sub_approve_{uid}"),
-            types.InlineKeyboardButton("❌ Отклонить", callback_data=f"sub_reject_{uid}")
+            types.InlineKeyboardButton("❌ Отклонить", callback_data=f"sub_reject_{uid}"),
+            types.InlineKeyboardButton("🚫 Забанить", callback_data=f"sub_ban_{uid}")
         )
 
         for oid in OWNER_IDS:
@@ -610,14 +722,40 @@ def handle_all_messages(m):
                 db.update_user(uid, step='main')
                 return
 
-            msg_wait = bot.send_message(cid, "🔄 Публикация объявлений..." if lang == 'ru' else "🔄 E'lonlar joylashtirilmoqda...")
-            success = post_ad_to_all_groups(uid, ad['text'], ad['photo'])
-            bot.delete_message(cid, msg_wait.message_id)
+            # Save to DB as pending
+            ad_id = db.add_ad(uid, ad['text'], ad['photo'], status='pending')
 
-            if success:
-                bot.send_message(cid, TEXTS[lang]['ad_posted_success'], reply_markup=get_main_kb(uid, lang, is_owner))
-            else:
-                bot.send_message(cid, "Ошибка отправки в группы.", reply_markup=get_main_kb(uid, lang, is_owner))
+            # Prepare moderation message for owners
+            caption = (
+                f"📣 *НОВОЕ ОБЪЯВЛЕНИЕ НА МОДЕРАЦИЮ*\n\n"
+                f"👤 Автор: {u.get('name')} (@{u.get('username')})\n"
+                f"🆔 ID: `{uid}`\n"
+                f"📱 Телефон: `{u.get('phone')}`\n\n"
+                f"📝 *Текст:* \n{ad['text']}"
+            )
+
+            markup = types.InlineKeyboardMarkup()
+            markup.row(
+                types.InlineKeyboardButton("✅ Одобрить рекламу", callback_data=f"ad_approve_{ad_id}"),
+                types.InlineKeyboardButton("❌ Отклонить рекламу", callback_data=f"ad_reject_{ad_id}")
+            )
+
+            # Send to owners
+            for oid in OWNER_IDS:
+                try:
+                    if ad['photo']:
+                        bot.send_photo(oid, ad['photo'], caption=caption, reply_markup=markup, parse_mode='Markdown')
+                    else:
+                        bot.send_message(oid, caption, reply_markup=markup, parse_mode='Markdown')
+                except Exception as e:
+                    print(f"Error sending moderation request to owner {oid}: {e}")
+
+            # Notify user
+            msg_sent_ok = {
+                'ru': "✅ Ваше объявление отправлено администратору на проверку. Мы уведомим вас о публикации!",
+                'uz': "✅ E'loningiz administratorga tekshirish uchun yuborildi. Natija haqida xabar beramiz!"
+            }
+            bot.send_message(cid, msg_sent_ok.get(lang, msg_sent_ok['ru']), reply_markup=get_main_kb(uid, lang, is_owner))
 
             db.update_user(uid, step='main')
             user_ads_in_progress.pop(uid, None)
@@ -648,6 +786,7 @@ def handle_callbacks(call):
         target_uid = data.replace("sub_approve_", "")
         exp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + 30*86400))
         db.update_user(target_uid, sub_status='active', sub_expire=exp)
+        db.add_payment(target_uid, 20000.0)
 
         bot.answer_callback_query(call.id, "Подписка активирована")
         bot.edit_message_caption(caption=call.message.caption + "\n\n🟢 *Статус: Одобрено*", chat_id=cid, message_id=call.message.message_id, parse_mode='Markdown')
@@ -678,6 +817,84 @@ def handle_callbacks(call):
             bot.send_message(target_uid, msg_map.get(t_lang, msg_map['ru']))
         except:
             pass
+
+    elif data.startswith("sub_ban_") and is_owner:
+        target_uid = data.replace("sub_ban_", "")
+        db.ban_user(target_uid)
+        bot.answer_callback_query(call.id, "Пользователь заблокирован")
+        bot.edit_message_caption(caption=call.message.caption + "\n\n🚫 *Статус: Заблокирован*", chat_id=cid, message_id=call.message.message_id, parse_mode='Markdown')
+
+        target_u = db.get_user(target_uid)
+        t_lang = target_u.get('lang', 'ru') if target_u else 'ru'
+        msg_map = {
+            'ru': "⚠️ Вы заблокированы в этом боте за отправку недействительного чека.",
+            'uz': "⚠️ Soxta chek yuborganingiz sababli ushbu botda bloklandingiz."
+        }
+        try:
+            bot.send_message(target_uid, msg_map.get(t_lang, msg_map['ru']))
+        except:
+            pass
+
+    elif data.startswith("ad_approve_") and is_owner:
+        ad_id = data.replace("ad_approve_", "")
+        ad = db.get_ad(ad_id)
+        if ad:
+            db.update_ad_status(ad_id, 'approved')
+            success = post_ad_to_all_groups(ad['user_id'], ad['text'], ad['photo'])
+            bot.answer_callback_query(call.id, "Объявление опубликовано")
+            status_suffix = "\n\n🟢 *Статус: Одобрено и Опубликовано*"
+            if call.message.caption:
+                try:
+                    bot.edit_message_caption(caption=call.message.caption + status_suffix, chat_id=cid, message_id=call.message.message_id, parse_mode='Markdown')
+                except:
+                    bot.edit_message_caption(caption=call.message.caption + status_suffix, chat_id=cid, message_id=call.message.message_id)
+            else:
+                try:
+                    bot.edit_message_text(text=call.message.text + status_suffix, chat_id=cid, message_id=call.message.message_id, parse_mode='Markdown')
+                except:
+                    bot.edit_message_text(text=call.message.text + status_suffix, chat_id=cid, message_id=call.message.message_id)
+            target_u = db.get_user(ad['user_id'])
+            t_lang = target_u.get('lang', 'ru') if target_u else 'ru'
+            msg_map = {
+                'ru': "🚀 Ваше объявление было одобрено и опубликовано в группах/каналах!",
+                'uz': "🚀 E'loningiz tasdiqlandi va guruh/kanallarga joylashtirildi!"
+            }
+            try:
+                bot.send_message(ad['user_id'], msg_map.get(t_lang, msg_map['ru']))
+            except:
+                pass
+        else:
+            bot.answer_callback_query(call.id, "Ошибка: Объявление не найдено")
+
+    elif data.startswith("ad_reject_") and is_owner:
+        ad_id = data.replace("ad_reject_", "")
+        ad = db.get_ad(ad_id)
+        if ad:
+            db.update_ad_status(ad_id, 'rejected')
+            bot.answer_callback_query(call.id, "Публикация отклонена")
+            status_suffix = "\n\n🔴 *Статус: Отклонено*"
+            if call.message.caption:
+                try:
+                    bot.edit_message_caption(caption=call.message.caption + status_suffix, chat_id=cid, message_id=call.message.message_id, parse_mode='Markdown')
+                except:
+                    bot.edit_message_caption(caption=call.message.caption + status_suffix, chat_id=cid, message_id=call.message.message_id)
+            else:
+                try:
+                    bot.edit_message_text(text=call.message.text + status_suffix, chat_id=cid, message_id=call.message.message_id, parse_mode='Markdown')
+                except:
+                    bot.edit_message_text(text=call.message.text + status_suffix, chat_id=cid, message_id=call.message.message_id)
+            target_u = db.get_user(ad['user_id'])
+            t_lang = target_u.get('lang', 'ru') if target_u else 'ru'
+            msg_map = {
+                'ru': "❌ Ваше объявление было отклонено администратором.",
+                'uz': "❌ E'loningiz administrator tomonidan rad etildi."
+            }
+            try:
+                bot.send_message(ad['user_id'], msg_map.get(t_lang, msg_map['ru']))
+            except:
+                pass
+        else:
+            bot.answer_callback_query(call.id, "Ошибка: Объявление не найдено")
 
 if __name__ == "__main__":
     keep_alive()

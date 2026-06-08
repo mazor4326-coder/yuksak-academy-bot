@@ -480,30 +480,14 @@ def handle_update(upd):
             elif action == "no": db.update_user(target_uid, step='main'); send_msg(target_uid, "❌ To'lov rad etildi."); send_msg(cid, f"❌ NO: {target_uid}")
             elif action == "fake": db.update_user(target_uid, banned=1); send_msg(target_uid, "🚫 FAKE uchun BAN!"); send_msg(cid, f"🚫 BANNED: {target_uid}")
         
-        elif data.startswith("adm_delvid||") and str(uid) in OWNER_IDS:
-            parts = data.split("||")
-            c_id = parts[1]
-            idx = int(parts[2])
-            courses = db.get_courses()
-            data_list = courses.get(c_id, [])
-            if 0 <= idx < len(data_list):
-                data_list.pop(idx)
-                db.update_course(c_id, data_list)
-                send_msg(cid, f"✅ Видео часть {idx+1} удалено!")
-            
-            # Re-render inline buttons
-            courses = db.get_courses()
-            data_list = courses.get(c_id, [])
-            if not data_list:
-                send_msg(cid, "📭 Все видео из этого курса удалены.")
-            else:
-                buttons = []
-                for i, item in enumerate(data_list):
-                    buttons.append([{"text": f"🗑️ Часть {i+1}", "callback_data": f"adm_delvid||{c_id}||{i}"}])
-                kb = {"inline_keyboard": buttons}
-                send_msg(cid, "🎬 *Обновленный список видео:*", kb=kb)
-                
-        urllib.request.urlopen(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery", data=urllib.parse.urlencode({'callback_query_id': cq['id']}).encode('utf-8')); return
+        # Deletion functionality disabled to preserve uploaded lessons
+        if str(uid) in OWNER_IDS:
+            send_msg(cid, "🚫 Удаление видео отключено администратором, уроки сохраняются навсегда.")
+        # Original deletion code removed
+        
+        # Note: The adm_delvid callback is intentionally left non-functional.
+        # This ensures that uploaded lessons are never removed.
+
 
     if 'message' not in upd: return
     m = upd['message']; cid = m['chat']['id']; uid = str(m['from']['id']); is_owner = (uid in OWNER_IDS); txt = m.get('text', '').strip()
@@ -557,7 +541,11 @@ def handle_update(upd):
 
     if txt == '/start':
         db.update_user(uid, lang=None, step="lang")
-        send_msg(cid, "Tilni tanlang / Выберите язык:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True}); return
+        # Language selection keyboard (reply keyboard)
+        send_msg(cid, "Tilni tanlang / Выберите язык:", kb={"keyboard": [[{"text": "🇺🇿 O'zbekcha"}, {"text": "🇷🇺 Русский"}, {"text": "🇺🇸 English"}]], "resize_keyboard": True})
+        # Inline button that opens the web assistant – replace YOUR_PUBLIC_DOMAIN with your ngrok or domain
+        send_msg(cid, "🌐 Откройте веб‑ассистент Abdulazizbek AI:", kb={"inline_keyboard": [[{"text": "Abdulazizbek AI", "url": "https://YOUR_PUBLIC_DOMAIN/assistant"}]]})
+        return
 
     if (txt == '/admin' or txt.lower() in ['admin', 'админ']) and is_owner:
         db.update_user(uid, step="admin_main")
@@ -718,11 +706,6 @@ def handle_update(upd):
             if txt == "➕ Добавить видео":
                 send_msg(cid, "🎬 *Для добавления видео:* сначала отправьте видеофайл в этот чат (как обычное видео).")
                 return
-            elif txt == "🗑️ Удалить видео":
-                db.update_user(uid, step="admin_del_cat")
-                items = [[{"text": v}] for v in t['categories'].values()]
-                send_msg(cid, "📁 Выберите категорию курса для удаления видео:", kb={"keyboard": items + [[{"text": t['back_btn']}]], "resize_keyboard": True})
-                return
             elif txt == "⬅️ В меню":
                 db.update_user(uid, step="admin_main")
                 kb = [
@@ -879,7 +862,7 @@ def handle_update(upd):
     if txt == t['subs_btn']:
         db.update_user(uid, step="subs"); send_msg(cid, t['subs_info'], kb={"keyboard": [[{"text": "Standard"}, {"text": "Platinum"}, {"text": "VIP"}], [{"text": t['back_btn']}]], "resize_keyboard": True}); return
     elif txt in ["Standard", "Platinum", "VIP"]:
-        card = "💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)"
+        card = "💳 NEW CARD: `8888014490626927` (KAMOLOV A.)"
         plan = txt.lower()
         db.update_user(uid, step=f"awaiting_payment||{plan}")
         
@@ -924,6 +907,19 @@ def handle_update(upd):
 
     if txt == t['ai_btn']:
         db.update_user(uid, step="ai_chat"); send_msg(cid, t['ai_welcome'], kb={"keyboard": [[{"text": t['back_btn']}]], "resize_keyboard": True}); return
+    # Custom response about bot creator
+    lower_txt = txt.lower()
+    creator_triggers = [
+        "who created you",
+        "who is your developer",
+        "кто тебя создал",
+        "кто твой разработчик",
+        "谁创建了你",
+        "谁是你的开发者"
+    ]
+    if any(trigger in lower_txt for trigger in creator_triggers):
+        send_msg(cid, "KAMOLOV ABDULAZIZ")
+        return
     elif u['step'] == "ai_chat" and txt:
         if txt == t['back_btn']:
             db.update_user(uid, step="main")

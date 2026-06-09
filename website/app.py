@@ -5,6 +5,10 @@ import urllib.parse
 import json
 from functools import wraps
 from flask import Flask, render_template, request, Response, send_from_directory, redirect
+import sys, os
+# Add parent directory to import bot module
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+from bot import get_ai_resp
 
 app = Flask(__name__, static_folder='.', static_url_path='', template_folder='templates')
 
@@ -21,10 +25,27 @@ def send_telegram_msg(chat_id, text):
     except Exception as e:
         print(f"Error sending TG message: {e}")
 
+import sys
 import time
 ADMIN_USER = "aziz67876578"
 ADMIN_PASS = "67596854903876584"
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "yuksak.db")
+
+# Robust DB Path resolution for development and standalone EXE packaging
+if getattr(sys, 'frozen', False):
+    exe_dir = os.path.dirname(sys.executable)
+    # Try looking for yuksak.db in the EXE folder, or in the parent folder
+    possible_paths = [
+        os.path.join(exe_dir, "yuksak.db"),
+        os.path.join(os.path.dirname(exe_dir), "yuksak.db"),
+        os.path.join(exe_dir, "website", "yuksak.db")
+    ]
+    DB_PATH = possible_paths[0]
+    for path in possible_paths:
+        if os.path.exists(path):
+            DB_PATH = path
+            break
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "yuksak.db")
 
 def check_auth(username, password):
     return username == ADMIN_USER and password == ADMIN_PASS
@@ -47,6 +68,22 @@ def requires_auth(f):
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
+
+# Web assistant UI page
+@app.route('/assistant')
+def assistant_page():
+    return render_template('assistant.html')
+
+# API endpoint for AI queries
+@app.route('/assistant/query', methods=['POST'])
+def assistant_query():
+    data = request.get_json(silent=True) or {}
+    question = data.get('question', '').strip()
+    lang = data.get('lang', 'ru')
+    if not question:
+        return {"error": "Empty question"}, 400
+    answer = get_ai_resp(question, lang)
+    return {"answer": answer}
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)

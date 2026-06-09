@@ -3,72 +3,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YUKSAK ACADEMY | Админ Панель</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <title>YUKSAK ACADEMY | Cyber Admin Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/style.css">
     <style>
-        body { padding-top: 2rem; background: var(--bg-darker); }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 4rem; }
-        .stat-card { padding: 2rem; text-align: center; border-radius: 16px; }
-        .stat-value { font-size: 2.5rem; font-weight: 900; color: var(--primary); margin-bottom: 0.5rem; }
-        .stat-label { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        
-        .data-section { margin-bottom: 4rem; }
-        .data-section h3 { margin-bottom: 1.5rem; color: #fff; font-size: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--glass-border); }
-        th { color: var(--primary); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px; }
-        tr:hover { background: rgba(255, 255, 255, 0.02); }
-        .badge { padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
-        .badge-danger { background: rgba(255, 50, 50, 0.2); color: #ff5555; }
-        .badge-success { background: rgba(50, 255, 50, 0.2); color: #55ff55; }
-        
-        .log-box { background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; color: #aaa; margin-bottom: 1rem; border: 1px solid var(--glass-border); }
-        .log-box strong { color: var(--primary); }
+        body {
+            padding-top: 3rem;
+            background: var(--bg-darker);
+            font-family: var(--font-sans);
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(0, 255, 102, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .stat-card-cyber {
+            background: rgba(4, 6, 12, 0.85);
+            border: 1px solid rgba(0, 255, 102, 0.15);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+            transition: var(--transition);
+        }
+
+        .stat-card-cyber::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 5%;
+            width: 90%;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .stat-card-cyber.blue::after {
+            background: var(--secondary);
+            box-shadow: 0 0 10px var(--secondary);
+        }
+
+        .stat-card-cyber.red::after {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .stat-card-cyber.purple::after {
+            background: #a855f7;
+            box-shadow: 0 0 10px #a855f7;
+        }
+
+        .stat-card-cyber:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 255, 102, 0.4);
+            box-shadow: 0 15px 30px rgba(0, 255, 102, 0.15);
+        }
+
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+            font-family: var(--font-mono);
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+        }
+
+        .stat-card-cyber.blue .stat-value {
+            color: var(--secondary);
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+        }
+
+        .stat-card-cyber.red .stat-value {
+            color: var(--accent);
+            text-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+        }
+
+        .stat-card-cyber.purple .stat-value {
+            color: #c084fc;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        .data-section-cyber {
+            background: rgba(4, 6, 12, 0.7);
+            border: 1px solid rgba(0, 255, 102, 0.12);
+            border-radius: 12px;
+            padding: 2.5rem;
+            margin-bottom: 4rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .data-section-cyber h3 {
+            margin-bottom: 2rem;
+            color: #fff;
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .data-section-cyber h3::before {
+            content: '>';
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Responsive custom grid table */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        table.cyber-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 0.88rem;
+        }
+
+        table.cyber-table th {
+            background: rgba(6, 12, 22, 0.9);
+            color: var(--primary);
+            font-weight: 700;
+            padding: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid rgba(0, 255, 102, 0.2);
+            font-size: 0.8rem;
+        }
+
+        table.cyber-table td {
+            padding: 1.1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            color: var(--text-main);
+        }
+
+        table.cyber-table tr:hover {
+            background: rgba(0, 255, 102, 0.02);
+        }
+
+        /* Badges styling */
+        .cyber-badge {
+            padding: 0.35rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            font-family: var(--font-mono);
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+
+        .cyber-badge-orange {
+            background: rgba(255, 170, 0, 0.15);
+            color: #ffaa00;
+            border: 1px solid rgba(255, 170, 0, 0.3);
+        }
+
+        .cyber-badge-red {
+            background: rgba(255, 0, 85, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(255, 0, 85, 0.3);
+        }
+
+        .cyber-badge-green {
+            background: rgba(0, 255, 102, 0.15);
+            color: var(--primary);
+            border: 1px solid rgba(0, 255, 102, 0.3);
+        }
+
+        /* Hacker warning logs container */
+        .hacker-log-card {
+            background: rgba(2, 2, 4, 0.6);
+            border: 1px solid rgba(255, 0, 85, 0.2);
+            border-left: 4px solid var(--accent);
+            border-radius: 6px;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            box-shadow: 0 4px 15px rgba(255, 0, 85, 0.05);
+            transition: var(--transition);
+        }
+
+        .hacker-log-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 6px 20px rgba(255, 0, 85, 0.12);
+            transform: translateX(4px);
+        }
+
+        .hacker-log-timestamp {
+            color: var(--text-muted);
+            margin-right: 0.8rem;
+        }
+
+        .hacker-log-threat {
+            color: var(--accent);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Select styling */
+        select.cyber-select {
+            padding: 0.4rem 0.8rem;
+            background: rgba(2, 2, 4, 0.9);
+            color: #fff;
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        select.cyber-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 8px rgba(0,255,102,0.3);
+            outline: none;
+        }
+
+        /* Tiny action button styles */
+        .btn-cyber-action {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 0.4rem 0.8rem;
+            background: transparent;
+            border: 1px solid rgba(0, 255, 102, 0.4);
+            color: var(--primary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-cyber-action:hover {
+            background: rgba(0, 255, 102, 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+        }
+
+        .btn-cyber-action.reject {
+            border-color: rgba(255, 170, 0, 0.4);
+            color: #ffaa00;
+        }
+
+        .btn-cyber-action.reject:hover {
+            background: rgba(255, 170, 0, 0.15);
+            border-color: #ffaa00;
+            box-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
+        }
+
+        .btn-cyber-action.fake {
+            border-color: rgba(255, 0, 85, 0.4);
+            color: var(--accent);
+        }
+
+        .btn-cyber-action.fake:hover {
+            background: rgba(255, 0, 85, 0.15);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+        }
     </style>
 </head>
-<body class="dark-mode">
+<body>
+    <div class="scanner-line"></div>
+    <div class="tech-grid"></div>
+
     <div class="container">
+        <!-- Admin Dashboard Header -->
         <div class="admin-header">
-            <a href="/" class="logo">YUKSAK <span>ADMIN</span></a>
+            <a href="/" class="logo">YUKSAK <span>[COMMAND_CENTER]</span></a>
             <div style="display: flex; gap: 1rem; align-items: center;">
-                <a href="#receipts" class="btn-outline" style="background: var(--primary); color: #000; border: none; font-weight: bold; padding: 0.6rem 1.2rem;">🔍 Проверка чеков</a>
-                <a href="/" class="btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;">На сайт</a>
+                <a href="#receipts" class="btn-cyber-outline" style="border-color: var(--primary); color: #fff; background: rgba(0, 255, 102, 0.15); font-weight: bold; text-shadow: 0 0 8px rgba(0,255,102,0.3);">🔍 Проверка Чеков</a>
+                <a href="/" class="btn-cyber-outline">На Сайт</a>
             </div>
         </div>
 
+        <!-- Dashboard Stats Grid -->
         <div class="stats-grid">
-            <div class="stat-card glass">
+            <div class="stat-card-cyber">
                 <div class="stat-value">{{ users_count }}</div>
                 <div class="stat-label">Пользователей</div>
             </div>
-            <div class="stat-card glass">
-                <div class="stat-value" style="color: #55ff55;">{{ payments_total }}</div>
+            <div class="stat-card-cyber blue">
+                <div class="stat-value">{{ payments_total }}</div>
                 <div class="stat-label">Оплат (UZS)</div>
             </div>
-            <div class="stat-card glass">
-                <div class="stat-value" style="color: #ff5555;">{{ banned_count }}</div>
-                <div class="stat-label">Заблокировано</div>
+            <div class="stat-card-cyber red">
+                <div class="stat-value">{{ banned_count }}</div>
+                <div class="stat-label">В бане</div>
             </div>
-            <div class="stat-card glass">
-                <div class="stat-value" style="color: #a855f7;">{{ extra_buyers }}</div>
-                <div class="stat-label">Доп. вопросы</div>
+            <div class="stat-card-cyber purple">
+                <div class="stat-value">{{ extra_buyers }}</div>
+                <div class="stat-label">Доп. AI запросы</div>
             </div>
         </div>
 
-        <div class="data-section" id="receipts">
-            <h3>🆕 Проверка чеков (Ожидают подтверждения)</h3>
-            <div style="overflow-x: auto;">
-                <table>
+        <!-- Pending Receipts Section -->
+        <div class="data-section-cyber" id="receipts">
+            <h3>🆕 Проверка Чеков (Ожидают подтверждения)</h3>
+            <div class="table-responsive">
+                <table class="cyber-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>User ID</th>
                             <th>Имя</th>
                             <th>Телефон</th>
-                            <th>Статус</th>
-                            <th>Действия</th>
+                            <th>Статус системы</th>
+                            <th>Команды действия</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,24 +346,24 @@
                             {% if u.step == 'awaiting_payment' %}
                             {% set pending = true %}
                             <tr>
-                                <td>{{ u.id }}</td>
+                                <td><span class="mono-text">{{ u.id }}</span></td>
                                 <td>{{ u.name }}</td>
                                 <td>{{ u.phone or '-' }}</td>
-                                <td><span class="badge" style="background: rgba(255, 170, 0, 0.2); color: #ffaa00;">ОЖИДАЕТ</span></td>
+                                <td><span class="cyber-badge cyber-badge-orange">ОЖИДАЕТ ПОДТВЕРЖДЕНИЯ</span></td>
                                 <td>
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <form action="/grant_access" method="POST">
+                                    <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+                                        <form action="/grant_access" method="POST" style="margin: 0;">
                                             <input type="hidden" name="user_id" value="{{ u.id }}">
-                                            <input type="hidden" name="action" value="standard"> <!-- По умолчанию Standard, можно поменять в базе -->
-                                            <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #55ff55; border-color: #55ff55;">✅ Принять</button>
+                                            <input type="hidden" name="action" value="standard">
+                                            <button type="submit" class="btn-cyber-action">✅ Принять (Standard)</button>
                                         </form>
-                                        <form action="/reject_payment" method="POST">
+                                        <form action="/reject_payment" method="POST" style="margin: 0;">
                                             <input type="hidden" name="user_id" value="{{ u.id }}">
-                                            <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ffaa00; border-color: #ffaa00;">❌ Отклонить</button>
+                                            <button type="submit" class="btn-cyber-action reject">❌ Отклонить</button>
                                         </form>
-                                        <form action="/fake_payment" method="POST">
+                                        <form action="/fake_payment" method="POST" style="margin: 0;">
                                             <input type="hidden" name="user_id" value="{{ u.id }}">
-                                            <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ff3333; border-color: #ff3333;">🚫 Фейк</button>
+                                            <button type="submit" class="btn-cyber-action fake">🚫 Фейк чека (Бан)</button>
                                         </form>
                                     </div>
                                 </td>
@@ -102,98 +371,127 @@
                             {% endif %}
                         {% endfor %}
                         {% if not pending %}
-                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Новых чеков на проверку нет.</td></tr>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                    [ INFO ] Новых чеков в буфере проверки не найдено.
+                                </td>
+                            </tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="data-section">
-            <h3>🛡️ Последние попытки взлома (Total Security)</h3>
+        <!-- Hacker Logs Section -->
+        <div class="data-section-cyber">
+            <h3>🛡️ Последние попытки взлома (Total Security Firewall)</h3>
             {% if hacker_logs %}
                 {% for log in hacker_logs %}
-                <div class="log-box">
-                    <strong>[{{ log.timestamp }}]</strong> ID: {{ log.user_id }} | @{{ log.username }}<br>
-                    <span style="color: #ff5555;">Угроза: {{ log.reason }}</span><br>
-                    Текст: <i>{{ log.bad_text }}</i>
+                <div class="hacker-log-card">
+                    <div>
+                        <span class="hacker-log-timestamp">[{{ log.timestamp }}]</span>
+                        <span>User ID: <strong class="mono-text" style="color: #fff;">{{ log.user_id }}</strong></span>
+                        {% if log.username %} | <span>Username: <strong style="color: var(--secondary);">@{{ log.username }}</strong></span>{% endif %}
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        Угроза: <span class="hacker-log-threat">{{ log.reason }}</span>
+                    </div>
+                    <div style="margin-top: 0.5rem; color: #ff5555; background: rgba(0,0,0,0.4); padding: 0.5rem; border-radius: 4px; font-size: 0.8rem;">
+                        Запрос: <code>{{ log.bad_text }}</code>
+                    </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <p style="color: var(--text-muted);">Попыток взлома не обнаружено. Система в безопасности.</p>
+                <p style="color: var(--text-muted); font-family: var(--font-mono);">[ SAFE ] Система в полной безопасности. Атак не зафиксировано.</p>
             {% endif %}
         </div>
 
-        <div class="data-section">
-            <h3>👥 База Пользователей (Последние 50)</h3>
-            <div style="overflow-x: auto;">
-                <table>
+        <!-- Database Users Section -->
+        <div class="data-section-cyber">
+            <h3>👥 Реестр Пользователей (Последние 50 активностей)</h3>
+            <div class="table-responsive">
+                <table class="cyber-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>User ID</th>
                             <th>Имя</th>
                             <th>Username</th>
                             <th>Телефон</th>
-                            <th>Тариф</th>
-                            <th>Доп. ИИ</th>
-                            <th>Статус</th>
-                            <th>Управление</th>
+                            <th>Подписка</th>
+                            <th>Доп. AI</th>
+                            <th>Состояние</th>
+                            <th>Управление доступом</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for u in users %}
                         <tr>
-                            <td>{{ u.id }}</td>
-                            <td>{{ u.name }}</td>
-                            <td>{% if u.username %}@{{ u.username }}{% else %}-{% endif %}</td>
+                            <td><span class="mono-text">{{ u.id }}</span></td>
+                            <td><strong>{{ u.name }}</strong></td>
+                            <td>
+                                {% if u.username %}
+                                    <span style="color: var(--secondary);">@{{ u.username }}</span>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">[ n/a ]</span>
+                                {% endif %}
+                            </td>
                             <td>{{ u.phone or '-' }}</td>
                             <td>
-                                {% if u.sub == 'none' %}<span style="color: var(--text-muted);">Без тарифа</span>
-                                {% else %}<strong style="color: var(--primary);">{{ u.sub | upper }}</strong>{% endif %}
+                                {% if u.sub == 'none' %}
+                                    <span style="color: var(--text-muted);">Без тарифа</span>
+                                {% else %}
+                                    <strong class="glow-text-green" style="color: var(--primary);">{{ u.sub | upper }}</strong>
+                                {% endif %}
                             </td>
                             <td>
-                                {% if u.extra_ai and u.extra_ai > 0 %}<strong style="color: #a855f7;">+{{ u.extra_ai }}</strong>{% else %}-{% endif %}
+                                {% if u.extra_ai and u.extra_ai > 0 %}
+                                    <strong style="color: #c084fc;">+{{ u.extra_ai }}</strong>
+                                {% else %}
+                                    <span style="color: var(--text-muted);">-</span>
+                                {% endif %}
                             </td>
                             <td>
                                 {% if u.banned %}
-                                    <span class="badge badge-danger">BANNED</span>
+                                    <span class="cyber-badge cyber-badge-red">BANNED</span>
                                 {% else %}
-                                    <span class="badge badge-success">ACTIVE</span>
+                                    <span class="cyber-badge cyber-badge-green">ACTIVE</span>
                                     {% if u.step == 'awaiting_payment' %}
-                                        <br><span class="badge" style="background: rgba(255, 170, 0, 0.2); color: #ffaa00; margin-top: 0.3rem; display: inline-block;">WAITING PAY</span>
+                                        <br><span class="cyber-badge cyber-badge-orange" style="margin-top: 0.3rem;">AWAIT PAY</span>
                                     {% endif %}
                                 {% endif %}
                             </td>
                             <td>
-                                <form action="/grant_access" method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <input type="hidden" name="user_id" value="{{ u.id }}">
-                                    <select name="action" style="padding: 0.3rem; border-radius: 4px; background: rgba(255,255,255,0.1); color: #fff; border: 1px solid var(--glass-border);">
-                                        <option value="standard">Тариф Standard</option>
-                                        <option value="platinum">Тариф Platinum</option>
-                                        <option value="vip">Тариф VIP</option>
-                                        <option value="extra100">+100 AI Вопросов</option>
-                                        <option value="extra200">+200 AI Вопросов</option>
-                                    </select>
-                                    <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: var(--primary); border-color: var(--primary);">💳 Выдать</button>
-                                </form>
-                                
-                                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                                    <form action="/reject_payment" method="POST">
+                                <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                                    <form action="/grant_access" method="POST" style="display: flex; gap: 0.5rem; align-items: center; margin: 0;">
                                         <input type="hidden" name="user_id" value="{{ u.id }}">
-                                        <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ffaa00; border-color: #ffaa00;">❌ Отклонить</button>
+                                        <select name="action" class="cyber-select">
+                                            <option value="standard">Standard (60k)</option>
+                                            <option value="platinum">Platinum (120k)</option>
+                                            <option value="vip">VIP (2mln)</option>
+                                            <option value="extra100">+100 AI вопросов</option>
+                                            <option value="extra200">+200 AI вопросов</option>
+                                        </select>
+                                        <button type="submit" class="btn-cyber-action" style="padding: 0.4rem 0.6rem;">Выдать</button>
                                     </form>
-                                    <form action="/fake_payment" method="POST">
-                                        <input type="hidden" name="user_id" value="{{ u.id }}">
-                                        <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ff3333; border-color: #ff3333;">🚫 Фейк</button>
-                                    </form>
-                                </div>
+                                    
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <form action="/reject_payment" method="POST" style="margin: 0;">
+                                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                                            <button type="submit" class="btn-cyber-action reject" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Отклонить чек</button>
+                                        </form>
+                                        <form action="/fake_payment" method="POST" style="margin: 0;">
+                                            <input type="hidden" name="user_id" value="{{ u.id }}">
+                                            <button type="submit" class="btn-cyber-action fake" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Фейк</button>
+                                        </form>
+                                    </div>
 
-                                {% if u.banned %}
-                                <form action="/unban" method="POST" style="margin-top: 0.5rem;">
-                                    <input type="hidden" name="user_id" value="{{ u.id }}">
-                                    <button type="submit" class="btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; cursor: pointer; color: #ff5555; border-color: #ff5555; width: 100%;">🔓 Разблокировать</button>
-                                </form>
-                                {% endif %}
+                                    {% if u.banned %}
+                                    <form action="/unban" method="POST" style="margin: 0;">
+                                        <input type="hidden" name="user_id" value="{{ u.id }}">
+                                        <button type="submit" class="btn-cyber-action" style="color: #ff5555; border-color: rgba(255,85,85,0.4); width: 100%; text-align: center;">🔓 Разблокировать</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -201,7 +499,6 @@
                 </table>
             </div>
         </div>
-
     </div>
 </body>
 </html>

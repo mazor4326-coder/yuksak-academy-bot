@@ -3,245 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YUKSAK ACADEMY</title>
+    <title>YUKSAK ACADEMY | Cyber Educational Platform</title>
+    <meta name="description" content="YUKSAK ACADEMY - Telegram bot orqali zamonaviy IT, Dizayn, 3D Modellashtirish va Buxgalteriya kurslarini o'rganing. Sun'iy intellekt yordamchisi bilan 24/7 ta'lim.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA configuration links -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00ff66">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/assets/yuksak_logo_192.png">
 </head>
-<body class="dark-mode">
-    <nav class="navbar glass">
+<body>
+    <!-- Cyber Scanner Animation -->
+    <div class="scanner-line"></div>
+    <div class="tech-grid"></div>
+    <canvas id="matrix" class="matrix-canvas"></canvas>
+
+    <!-- Top Navigation -->
+    <nav class="navbar">
         <div class="container">
-            <a href="#" class="logo">YUKSAK <span>ACADEMY</span></a>
+            <a href="#" class="logo">YUKSAK <span>[ACADEMY]</span></a>
             <div class="nav-links">
-                <a href="#why-us" data-ru="О нас" data-uz="Biz haqimizda" data-en="About Us">Biz haqimizda</a>
+                <a href="#about" data-ru="О нас" data-uz="Biz haqimizda" data-en="About Us">Biz haqimizda</a>
                 <a href="#courses" data-ru="Курсы" data-uz="Kurslar" data-en="Courses">Kurslar</a>
                 <a href="#security" data-ru="Защита" data-uz="Himoya" data-en="Security">Himoya</a>
                 <a href="#pricing" data-ru="Тарифы" data-uz="Tariflar" data-en="Pricing">Tariflar</a>
-                <button id="lang-toggle" class="btn-outline">UZ</button>
+                <button id="lang-toggle" class="btn-cyber-outline">UZ</button>
             </div>
         </div>
     </nav>
 
+    <!-- Hero Banner with Interactive Terminal -->
     <header id="about" class="hero-v3">
-        <div class="hero-canvas-bg"></div>
         <div class="container">
             <div class="hero-grid">
                 <div class="hero-text" data-aos="fade-right">
-                    <h1 data-ru="YUKSAK ACADEMY" data-uz="YUKSAK ACADEMY" data-en="YUKSAK ACADEMY" style="margin-bottom: 0.5rem;">YUKSAK ACADEMY</h1>
+                    <span class="section-tag" data-ru="[ ИНТЕЛЛЕКТУАЛЬНОЕ ОБУЧЕНИЕ ]" data-uz="[ INTELLEKTUAL TA'LIM ]" data-en="[ INTELLIGENT EDUCATION ]">[ INTELLEKTUAL TA'LIM ]</span>
+                    <h1 class="glow-text-green" data-ru="YUKSAK ACADEMY" data-uz="YUKSAK ACADEMY" data-en="YUKSAK ACADEMY">YUKSAK ACADEMY</h1>
+                    <p data-ru="Инновационная образовательная платформа внутри Telegram. Учитесь программированию, дизайну и финансам с персональным ИИ-наставником 24/7 без установки лишних программ." data-uz="Telegram ichidagi innovatsion ta'lim platformasi. Dasturlash, dizayn va moliyani shaxsiy AI-mentor yordamida 24/7 o'rganing - hech qanday qo'shimcha dasturlarsiz." data-en="An innovative educational platform inside Telegram. Learn programming, design, and finance with a personal AI mentor 24/7 without installing extra apps.">Telegram ichidagi innovatsion ta'lim platformasi. Dasturlash, dizayn va moliyani shaxsiy AI-mentor yordamida 24/7 o'rganing - hech qanday qo'shimcha dasturlarsiz.</p>
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                        <a href="https://t.me/yuksak_academybot" target="_blank" class="btn-cyber-primary" data-ru="ЗАПУСТИТЬ БОТА" data-uz="BOTNI ISHGA TUSHIRISH" data-en="LAUNCH BOT" style="max-width: 280px;">BOTNI ISHGA TUSHIRISH</a>
+                        <a href="#courses" class="btn-cyber-outline" data-ru="СМОТРЕТЬ КУРСЫ" data-uz="KURSLARNI KO'RISH" data-en="VIEW COURSES" style="display: flex; align-items: center; justify-content: center; padding: 0 2rem;">KURSLARNI KO'RISH</a>
+                    </div>
                 </div>
-                <div class="hero-visual-v3" data-aos="zoom-in">
-                    <div class="main-sphere"></div>
+
+                <div class="hero-visual" data-aos="fade-left">
+                    <!-- Interactive Terminal Simulation -->
+                    <div class="terminal-window">
+                        <div class="terminal-header">
+                            <div class="terminal-buttons">
+                                <span class="term-btn red"></span>
+                                <span class="term-btn yellow"></span>
+                                <span class="term-btn green"></span>
+                            </div>
+                            <div class="terminal-title">yuksak_academy_terminal.sh</div>
+                            <div style="width: 40px;"></div>
+                        </div>
+                        <div class="terminal-body" id="term-body">
+                            <div class="terminal-row">
+                                <span class="term-prompt">yuksak@academy:~$</span>
+                                <span class="term-input-cmd">./start_academy.sh</span>
+                            </div>
+                            <div class="term-output success" data-ru="[OK] Соединение с сервером YUKSAK установлено..." data-uz="[OK] YUKSAK serveri bilan ulanish o'rnatildi..." data-en="[OK] Connection to YUKSAK server established...">[OK] YUKSAK serveri bilan ulanish o'rnatildi...</div>
+                            <div class="term-output" data-ru="Инициализация ИИ-Ассистента..." data-uz="Sun'iy Intellekt asistentini yuklash..." data-en="Initializing AI Assistant...">Sun'iy Intellekt asistentini yuklash...</div>
+                            <div class="term-output success" data-ru="[ACTIVE] Модули безопасности Total Security запущены." data-uz="[ACTIVE] Total Security xavfsizlik modullari ishga tushirildi." data-en="[ACTIVE] Total Security modules are fully active.">[ACTIVE] Total Security xavfsizlik modullari ishga tushirildi.</div>
+                            <div class="terminal-row">
+                                <span class="term-prompt">yuksak@academy:~$</span>
+                                <span class="term-input-cmd" id="terminal-interactive-cmd">help</span>
+                                <span class="term-cursor"></span>
+                            </div>
+                            <div class="term-output" id="terminal-interactive-output" data-ru="Используйте интерактивные кнопки ниже для отправки команд системе." data-uz="Tizimga buyruq yuborish uchun quyidagi interaktiv tugmalardan foydalaning." data-en="Use the interactive buttons below to send commands to the system.">Tizimga buyruq yuborish uchun quyidagi interaktiv tugmalardan foydalaning.</div>
+                        </div>
+                        <div class="terminal-controls">
+                            <button class="term-action-btn" onclick="runTermCmd('help')" data-ru="[Помощь]" data-uz="[Yordam]" data-en="[Help]">[Yordam]</button>
+                            <button class="term-action-btn" onclick="runTermCmd('modules')" data-ru="[Модули]" data-uz="[Modullar]" data-en="[Modules]">[Modullar]</button>
+                            <button class="term-action-btn" onclick="runTermCmd('secure')" data-ru="[Защита]" data-uz="[Xavfsizlik]" data-en="[Security]">[Xavfsizlik]</button>
+                            <button class="term-action-btn" onclick="runTermCmd('status')" data-ru="[Статус]" data-uz="[Holat]" data-en="[Status]">[Holat]</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
 
-
-
-    <section id="courses" class="courses-detailed">
+    <!-- Courses Grid Section -->
+    <section id="courses" style="padding: 8rem 0; background: var(--bg-dark);">
         <div class="container">
+            <div class="section-title-wrap" data-aos="fade-up">
+                <span class="section-tag" data-ru="[ УЧЕБНЫЕ КУРСЫ ]" data-uz="[ O'QUV KURSLARI ]" data-en="[ EDUCATIONAL COURSES ]">[ O'QUV KURSLARI ]</span>
+                <h2 class="section-title glow-text-green" data-ru="Интерактивные Направления" data-uz="Interaktiv Yo'nalishlar" data-en="Interactive Paths">Interaktiv Yo'nalishlar</h2>
+            </div>
 
-            <div class="grid-3">
+            <div class="grid-2">
                 <!-- Course 1 -->
-                <div class="course-card-v2 glass" data-aos="zoom-in">
-                    <div class="course-header" style="background-image: url('assets/yuksak_academy_course_programming_new_1778757384924.png')">
-                        <div class="course-overlay"></div>
-                        <span class="course-tag">IT</span>
+                <div class="course-card-v3" data-aos="fade-up">
+                    <div class="course-header-v3" style="background-image: url('assets/yuksak_academy_course_programming_new_1778757384924.png')">
+                        <div class="course-overlay-v3"></div>
+                        <span class="course-mod-tag">MOD_01</span>
                     </div>
-                    <div class="course-body">
-                        <h4 data-ru="Программирование" data-uz="Dasturlash" data-en="Programming">Dasturlash</h4>
+                    <div class="course-body-v3">
+                        <h4 data-ru="Dasturlash (IT)" data-uz="Dasturlash (IT)" data-en="Programming (IT)">Dasturlash (IT)</h4>
                         <ul>
-                            <li data-ru="Telegram боты на Python" data-uz="Python-da Telegram botlar" data-en="Telegram bots with Python">Python-da Telegram botlar</li>
-                            <li data-ru="Создание сайтов" data-uz="Saytlar yaratish" data-en="Modern Web Design">Saytlar yaratish</li>
+                            <li data-ru="Создание Telegram ботов на Python" data-uz="Python-da Telegram botlar yaratish" data-en="Telegram bot creation with Python">Python-da Telegram botlar yaratish</li>
+                            <li data-ru="Разработка интеллектуальных систем" data-uz="Intellektual bot tizimlarini ishlab chiqish" data-en="Intelligent bot systems development">Intellektual bot tizimlarini ishlab chiqish</li>
                         </ul>
+                        <div class="course-cyber-footer">
+                            <div class="course-status-label">
+                                <span class="pulse-dot"></span>
+                                <span data-ru="ОНЛАЙН" data-uz="TIZIMDA" data-en="ONLINE">TIZIMDA</span>
+                            </div>
+                            <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary);">[ CERTIFIED ]</span>
+                        </div>
                     </div>
                 </div>
+
                 <!-- Course 2 -->
-                <div class="course-card-v2 glass" data-aos="zoom-in" data-aos-delay="100">
-                    <div class="course-header" style="background-image: url('assets/yuksak_academy_course_design_ai_1778756826898.png')">
-                        <div class="course-overlay"></div>
-                        <span class="course-tag">DESIGN</span>
+                <div class="course-card-v3" data-aos="fade-up" data-aos-delay="100">
+                    <div class="course-header-v3" style="background-image: url('assets/yuksak_academy_course_design_ai_1778756826898.png')">
+                        <div class="course-overlay-v3"></div>
+                        <span class="course-mod-tag">MOD_02</span>
                     </div>
-                    <div class="course-body">
+                    <div class="course-body-v3">
                         <h4 data-ru="Дизайн & ИИ" data-uz="Dizayn & AI" data-en="Design & AI">Dizayn & AI</h4>
                         <ul>
-                            <li data-ru="Генерация визуалов через AI" data-uz="AI orqali vizuallar yaratish" data-en="AI-powered visual generation">AI orqali vizuallar yaratish</li>
-                            <li data-ru="UX/UI и Логотипы" data-uz="UX/UI va Logotiplar" data-en="UX/UI and Logos">UX/UI va Logotiplar</li>
+                            <li data-ru="Генерация визуалов через AI" data-uz="AI yordamida ajoyib vizuallar yaratish" data-en="Visual generation via AI">AI yordamida ajoyib vizuallar yaratish</li>
+                            <li data-ru="UX/UI дизайн и Логотипы" data-uz="UX/UI dizayn va logotiplar san'ati" data-en="UX/UI Design and Logo Art">UX/UI dizayn va logotiplar san'ati</li>
                         </ul>
+                        <div class="course-cyber-footer">
+                            <div class="course-status-label">
+                                <span class="pulse-dot"></span>
+                                <span data-ru="ОНЛАЙН" data-uz="TIZIMDA" data-en="ONLINE">TIZIMDA</span>
+                            </div>
+                            <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary);">[ CERTIFIED ]</span>
+                        </div>
                     </div>
                 </div>
+
                 <!-- Course 3 -->
-                <div class="course-card-v2 glass" data-aos="zoom-in" data-aos-delay="200">
-                    <div class="course-header" style="background-image: url('assets/yuksak_academy_course_3d_modeling_1778756816898.png')">
-                        <div class="course-overlay"></div>
-                        <span class="course-tag">3D</span>
+                <div class="course-card-v3" data-aos="fade-up" data-aos-delay="200">
+                    <div class="course-header-v3" style="background-image: url('assets/yuksak_academy_course_3d_modeling_1778756816898.png')">
+                        <div class="course-overlay-v3"></div>
+                        <span class="course-mod-tag">MOD_03</span>
                     </div>
-                    <div class="course-body">
+                    <div class="course-body-v3">
                         <h4 data-ru="3D Моделирование" data-uz="3D Modellashtirish" data-en="3D Modeling">3D Modellashtirish</h4>
                         <ul>
-                            <li data-ru="Интерьеры в 3ds Max" data-uz="3ds Max-da interyerlar" data-en="Interiors in 3ds Max">3ds Max-da interyerlar</li>
-                            <li data-ru="Персонажи в Blender" data-uz="Blender-da personajlar" data-en="Characters in Blender">Blender-da personajlar</li>
+                            <li data-ru="Интерьеры в 3ds Max" data-uz="3ds Max-da professional interyerlar" data-en="Professional 3ds Max interiors">3ds Max-da professional interyerlar</li>
+                            <li data-ru="Персонажи в Blender" data-uz="Blender dasturida 3D personajlar" data-en="3D characters in Blender">Blender dasturida 3D personajlar</li>
                         </ul>
+                        <div class="course-cyber-footer">
+                            <div class="course-status-label">
+                                <span class="pulse-dot"></span>
+                                <span data-ru="ОНЛАЙН" data-uz="TIZIMDA" data-en="ONLINE">TIZIMDA</span>
+                            </div>
+                            <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary);">[ CERTIFIED ]</span>
+                        </div>
                     </div>
                 </div>
+
                 <!-- Course 4 -->
-                <div class="course-card-v2 glass" data-aos="zoom-in">
-                    <div class="course-header" style="background-image: url('assets/yuksak_academy_course_accounting_new_1778757408226.png')">
-                        <div class="course-overlay"></div>
-                        <span class="course-tag">FINANCE</span>
+                <div class="course-card-v3" data-aos="fade-up">
+                    <div class="course-header-v3" style="background-image: url('https://images.unsplash.com/photo-1543167606-936d9fd217a3?auto=format&fit=crop&q=80&w=400')">
+                        <div class="course-overlay-v3"></div>
+                        <span class="course-mod-tag">MOD_04</span>
                     </div>
-                    <div class="course-body">
-                        <h4 data-ru="1С Бухгалтерия" data-uz="1C Buxgalteriya" data-en="1C Accounting">1C Buxgalteriya</h4>
-                        <ul>
-                            <li data-ru="Уровни с 1 по 5" data-uz="1-dan 5-bosqichgacha" data-en="Levels 1 to 5">1-dan 5-bosqichgacha</li>
-                            <li data-ru="Автоматизация учета" data-uz="Hisobni avtomatlashtirish" data-en="Accounting automation">Hisobni avtomatlashtirish</li>
-                        </ul>
-                    </div>
-                </div>
-                <!-- Course 5 -->
-                <div class="course-card-v2 glass" data-aos="zoom-in" data-aos-delay="100">
-                    <div class="course-header" style="background-image: url('https://images.unsplash.com/photo-1543167606-936d9fd217a3?auto=format&fit=crop&q=80&w=400')">
-                        <div class="course-overlay"></div>
-                        <span class="course-tag">LANGUAGES</span>
-                    </div>
-                    <div class="course-body">
+                    <div class="course-body-v3">
                         <h4 data-ru="Языковые курсы" data-uz="Til kurslari" data-en="Language Courses">Til kurslari</h4>
                         <ul>
                             <li data-ru="Английский язык" data-uz="Ingliz tili" data-en="English Language">Ingliz tili</li>
                             <li data-ru="Русский язык" data-uz="Rus tili" data-en="Russian Language">Rus tili</li>
                         </ul>
-                    </div>
-                </div>
-                <!-- Course 6 -->
-                <div class="course-card-v2 glass" data-aos="zoom-in" data-aos-delay="200">
-                    <div class="course-header" style="background-image: url('https://images.unsplash.com/photo-1496171367470-9ed9a91ea931?auto=format&fit=crop&q=80&w=400')">
-                        <div class="course-overlay"></div>
-                        <span class="course-tag">BASIC</span>
-                    </div>
-                    <div class="course-body">
-                        <h4 data-ru="Компьютерная грамотность" data-uz="Kompyuter savodxonligi" data-en="Computer Literacy">Kompyuter savodxonligi</h4>
-                        <ul>
-                            <li data-ru="Базовые навыки работы с ПК" data-uz="Shaxsiy kompyuter bilan ishlash asoslari" data-en="Basic PC skills">Shaxsiy kompyuter bilan ishlash asoslari</li>
-                            <li data-ru="Windows и безопасность" data-uz="Windows va xavfsizlik" data-en="Windows & security">Windows va xavfsizlik</li>
-                        </ul>
+                        <div class="course-cyber-footer">
+                            <div class="course-status-label">
+                                <span class="pulse-dot"></span>
+                                <span data-ru="ОНЛАЙН" data-uz="TIZIMDA" data-en="ONLINE">TIZIMDA</span>
+                            </div>
+                            <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--primary);">[ CERTIFIED ]</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="security" class="security-detailed glass-section" style="padding-top: 5rem;">
+    <!-- Total Security HUD Section -->
+    <section id="security" style="padding: 8rem 0; background: var(--bg-darker); border-top: 1px solid rgba(0, 255, 102, 0.1);">
         <div class="container">
-            <div class="sec-layout">
+            <div class="grid-2" style="align-items: center;">
                 <div class="sec-text" data-aos="fade-right">
-                    <h2 data-ru="Протокол Total Security" data-uz="Total Security protokoli" data-en="Total Security Protocol">Total Security protokoli</h2>
-                    <p data-ru="Бот оснащен передовыми системами защиты для обеспечения безопасности контента и пользователей." data-uz="Bot kontent va foydalanuvchilar xavfsizligini ta'minlash uchun ilg'or himoya tizimlari bilan jihozlangan." data-en="The bot is equipped with advanced protection systems to ensure the security of content and users.">Bot kontent va foydalanuvchilar xavfsizligini ta'minlash uchun ilg'or himoya tizimlari bilan jihozlangan.</p>
-                    <div class="sec-features">
-                        <div class="sec-item">
-                            <span class="sec-icon">🔒</span>
-                            <div class="sec-info">
-                                <h5 data-ru="Защита от копирования" data-uz="Nusxalashdan himoya" data-en="Copy Protection">Nusxalashdan himoya</h5>
-                                <p data-ru="Видео нельзя скачать или переслать." data-uz="Videolarni yuklab olish yoki yuborish taqiqlangan." data-en="Videos cannot be downloaded or forwarded.">Videolarni yuklab olish yoki yuborish taqiqlangan.</p>
+                    <span class="section-tag" data-ru="[ БЕЗОПАСНОСТЬ ДАННЫХ ]" data-uz="[ XAVFSIZLIK PROTOKOLI ]" data-en="[ SYSTEM SECURITY ]">[ XAVFSIZLIK PROTOKOLI ]</span>
+                    <h2 class="glow-text-green" data-ru="Протокол Total Security" data-uz="Total Security Protokoli" data-en="Total Security Protocol" style="font-size: 2.5rem; text-transform: uppercase; margin-bottom: 1.5rem;">Total Security Protokoli</h2>
+                    <p data-ru="Уникальный протокол защиты образовательного контента и пользовательских данных. Наша интеллектуальная система предотвращает несанкционированный доступ и копирование материалов." data-uz="Ta'lim kontenti va foydalanuvchi ma'lumotlarini himoya qilishning noyob xavfsizlik tizimi. Bizning aqlli algoritmimiz ruxsatsiz kirish va kontentni o'g'irlashni butunlay to'sadi." data-en="A unique security protocol for protecting educational content and user data. Our intelligent system prevents unauthorized access and illegal content copying.">Ta'lim kontenti va foydalanuvchi ma'lumotlarini himoya qilishning noyob xavfsizlik tizimi. Bizning aqlli algoritmimiz ruxsatsiz kirish va kontentni o'g'irlashni butunlay to'sadi.</p>
+                    
+                    <div class="cyber-sec-list" style="margin-top: 2.5rem;">
+                        <div class="cyber-sec-item">
+                            <span class="cyber-sec-icon">🔒</span>
+                            <div class="cyber-sec-info">
+                                <h5 data-ru="Защита от Копирования" data-uz="Nusxalash va Yuklashdan Himoya" data-en="Copy & Download Protection">Nusxalash va Yuklashdan Himoya</h5>
+                                <p data-ru="Видеоматериалы и лекции защищены от записи экрана, пересылки и прямого скачивания." data-uz="O'quv videolari va darslar ekran yozuvi, boshqalarga yuborish va yuklab olishdan to'liq himoyalangan." data-en="Video lectures and content are strictly protected from screen-recording, forwarding and direct downloading.">O'quv videolari va darslar ekran yozuvi, boshqalarga yuborish va yuklab olishdan to'liq himoyalangan.</p>
                             </div>
                         </div>
-                        <div class="sec-item">
-                            <span class="sec-icon">🛡️</span>
-                            <div class="sec-info">
-                                <h5 data-ru="Анти-хакер система" data-uz="Anti-xaker tizimi" data-en="Anti-Hacker System">Anti-xaker tizimi</h5>
-                                <p data-ru="Автоматическая блокировка злоумышленников." data-uz="Buzg'unchilarni avtomatik bloklash." data-en="Automatic blocking of intruders.">Buzg'unchilarni avtomatik bloklash.</p>
+                        <div class="cyber-sec-item">
+                            <span class="cyber-sec-icon">🛡️</span>
+                            <div class="cyber-sec-info">
+                                <h5 data-ru="Анти-Хакер Система" data-uz="Anti-Xaker Himoya Tizimi" data-en="Anti-Hacker Defence Shield">Anti-Xaker Himoya Tizimi</h5>
+                                <p data-ru="Автоматическое обнаружение попыток взлома или загрузки поддельных чеков с моментальной блокировкой злоумышленника." data-uz="Tizimni buzish yoki soxta to'lov cheklarini yuklash harakatlarini avtomatik aniqlash va buzg'unchini darhol bloklash." data-en="Automated detection of hacking attempts or fake payment receipts with immediate terminal ban.">Tizimni buzish yoki soxta to'lov cheklarini yuklash harakatlarini avtomatik aniqlash va buzg'unchini darhol bloklash.</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="sec-visual" data-aos="zoom-in">
-                    <div class="cyber-shield">
-                        <div class="ring"></div>
-                        <div class="ring"></div>
-                        <div class="ring"></div>
-                        <div class="shield-text">TOTAL SECURE</div>
+
+                <div class="sec-visual" data-aos="zoom-in" data-aos-delay="100">
+                    <!-- High-tech rotating HUD display -->
+                    <div class="hud-wrapper">
+                        <div class="hud-ring outer"></div>
+                        <div class="hud-ring middle"></div>
+                        <div class="hud-ring inner"></div>
+                        <div class="hud-center">
+                            <div class="hud-icon">🛡️</div>
+                            <div class="hud-status glow-text-green" data-ru="ЗАЩИЩЕНО" data-uz="XAVFSIZ" data-en="SECURED">XAVFSIZ</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="pricing" class="pricing-v2">
+    <!-- Pricing / Tariffs section -->
+    <section id="pricing" style="padding: 8rem 0; background: var(--bg-dark);">
         <div class="container">
-            <h2 class="section-title" data-ru="Тарифы и Оплата" data-uz="Tariflar va To'lov" data-en="Pricing and Payment">Tariflar va To'lov</h2>
-            <p style="text-align: center; color: var(--text-muted); margin-top: -2rem; margin-bottom: 3rem; font-size: 1.1rem;" data-ru="Чтобы оплатить тариф, вы должны зарегистрироваться в нашем боте." data-uz="Tarifni to'lash uchun botimizdan ro'yxatdan o'tishingiz kerak." data-en="To pay for a tariff, you must register in our bot.">Tarifni to'lash uchun botimizdan ro'yxatdan o'tishingiz kerak.</p>
-            <div class="grid-3">
-                <div class="price-box glass" data-aos="fade-up">
-                    <div class="p-header">
+            <div class="section-title-wrap" data-aos="fade-up">
+                <span class="section-tag" data-ru="[ ЦЕНОВЫЕ ПАКЕТЫ ]" data-uz="[ TO'LOV PAKETLARI ]" data-en="[ PRICING OPTIONS ]">[ TO'LOV PAKETLARI ]</span>
+                <h2 class="section-title glow-text-green" data-ru="Тарифы на Обучение" data-uz="Tariflar va To'lov" data-en="Pricing Packages">Tariflar va To'lov</h2>
+                <p style="color: var(--text-muted); margin-top: 1rem; font-size: 1.05rem;" data-ru="Для активации выбранного тарифа необходимо запустить бота Telegram." data-uz="Tanlangan tarifni faollashtirish uchun Telegram botimizga a'zo bo'lishingiz kerak." data-en="To activate the selected plan, you must launch our Telegram bot.">Tanlangan tarifni faollashtirish uchun Telegram botimizga a'zo bo'lishingiz kerak.</p>
+            </div>
+
+            <div class="tariff-grid">
+                <!-- Standard tariff -->
+                <div class="cyber-deck" data-aos="fade-up">
+                    <div class="cyber-deck-header">
                         <h3 data-ru="🥉 СТАНДАРТ" data-uz="🥉 STANDARD" data-en="🥉 STANDARD">🥉 STANDARD</h3>
-                        <div class="p-amount">60,000 <span>UZS</span></div>
+                        <div class="amount">60,000 <span>UZS</span></div>
                     </div>
-                    <ul class="p-features">
-                        <li data-ru="Доступ к 1 курсу" data-uz="1 ta kursga kirish" data-en="Access to 1 Course">1 ta kursga kirish</li>
-                        <li data-ru="200 вопросов ИИ" data-uz="200 ta AI savollari" data-en="200 AI Questions">200 ta AI savollari</li>
-                        <li data-ru="Доступ 1 месяц" data-uz="1 oy kirish" data-en="1 Month Access">1 oy kirish</li>
+                    <ul class="cyber-deck-features">
+                        <li data-ru="Доступ к 1 выбранному курсу" data-uz="1 ta tanlangan kursga to'liq ulanish" data-en="Full access to 1 selected course">1 ta tanlangan kursga to'liq ulanish</li>
+                        <li data-ru="200 интеллектуальных вопросов ИИ" data-uz="200 ta sun'iy intellekt (AI) savollari" data-en="200 AI assistant questions">200 ta sun'iy intellekt (AI) savollari</li>
+                        <li data-ru="Период активности: 1 месяц" data-uz="Foydalanish muddati: 1 oy" data-en="Access duration: 1 Month">Foydalanish muddati: 1 oy</li>
                     </ul>
-                    <a href="https://t.me/yuksak_academybot" class="btn-outline-gold" data-ru="Перейти в Бот" data-uz="Botga o'tish" data-en="Go to Bot">Botga o'tish</a>
+                    <a href="https://t.me/yuksak_academybot" target="_blank" class="btn-cyber-primary" data-ru="КУПИТЬ В БОТЕ" data-uz="BOTDA SOTIB OLISH" data-en="GET IN BOT">BOTDA SOTIB OLISH</a>
                 </div>
-                <div class="price-box glass featured" data-aos="fade-up" data-aos-delay="100">
-                    <div class="p-header">
+
+                <!-- Platinum tariff -->
+                <div class="cyber-deck featured blue" data-aos="fade-up" data-aos-delay="100">
+                    <div class="cyber-deck-header">
                         <h3 data-ru="🥈 ПЛАТИНА" data-uz="🥈 PLATINUM" data-en="🥈 PLATINUM">🥈 PLATINUM</h3>
-                        <div class="p-amount">120,000 <span>UZS</span></div>
+                        <div class="amount">120,000 <span>UZS</span></div>
                     </div>
-                    <ul class="p-features">
-                        <li data-ru="Доступ к 2 курсам" data-uz="2 ta kursga kirish" data-en="Access to 2 Courses">2 ta kursga kirish</li>
-                        <li data-ru="400 вопросов ИИ" data-uz="400 ta AI savollari" data-en="400 AI Questions">400 ta AI savollari</li>
-                        <li data-ru="Доступ 1 месяц" data-uz="1 oy kirish" data-en="1 Month Access">1 oy kirish</li>
+                    <ul class="cyber-deck-features">
+                        <li data-ru="Доступ к 2 любым курсам" data-uz="2 ta istalgan kursga ulanish" data-en="Access to 2 selected courses">2 ta istalgan kursga ulanish</li>
+                        <li data-ru="400 интеллектуальных вопросов ИИ" data-uz="400 ta sun'iy intellekt (AI) savollari" data-en="400 AI assistant questions">400 ta sun'iy intellekt (AI) savollari</li>
+                        <li data-ru="Период активности: 1 месяц" data-uz="Foydalanish muddati: 1 oy" data-en="Access duration: 1 Month">Foydalanish muddati: 1 oy</li>
                     </ul>
-                    <a href="https://t.me/yuksak_academybot" class="btn-primary-gold" data-ru="Перейти в Бот" data-uz="Botga o'tish" data-en="Go to Bot">Botga o'tish</a>
+                    <a href="https://t.me/yuksak_academybot" target="_blank" class="btn-cyber-primary btn-cyber-blue" data-ru="КУПИТЬ В БОТЕ" data-uz="BOTDA SOTIB OLISH" data-en="GET IN BOT">BOTDA SOTIB OLISH</a>
                 </div>
-                <div class="price-box glass" data-aos="fade-up" data-aos-delay="200">
-                    <div class="p-header">
-                        <h3 data-ru="🥇 ВИП (Навсегда)" data-uz="🥇 VIP (Umrbod)" data-en="🥇 VIP (Lifetime)">🥇 VIP (Umrbod)</h3>
-                        <div class="p-amount">2,000,000 <span>UZS</span></div>
+
+                <!-- VIP tariff -->
+                <div class="cyber-deck vip" data-aos="fade-up" data-aos-delay="200">
+                    <div class="cyber-deck-header">
+                        <h3 data-ru="🥇 ВИП (1 Месяц)" data-uz="🥇 VIP (1 Oy)" data-en="🥇 VIP (1 Month)">🥇 VIP (1 Oy)</h3>
+                        <div class="amount">2,000,000 <span>UZS</span></div>
                     </div>
-                    <ul class="p-features">
-                        <li data-ru="Все курсы академии" data-uz="Barcha kurslarga kirish" data-en="All Academy Courses">Barcha kurslarga kirish</li>
-                        <li data-ru="5,000 вопросов ИИ" data-uz="5,000 ta AI savollari" data-en="5,000 AI Questions">5,000 ta AI savollari</li>
-                        <li data-ru="Доступ навсегда" data-uz="Butun umrga kirish" data-en="Lifetime Access">Butun umrga kirish</li>
+                    <ul class="cyber-deck-features">
+                        <li data-ru="Доступ ко всем курсам платформы" data-uz="Akademiyaning barcha kurslariga ulanish" data-en="Unlimited access to all courses">Akademiyaning barcha kurslariga ulanish</li>
+                        <li data-ru="5,000 интеллектуальных вопросов ИИ" data-uz="5,000 ta sun'iy intellekt (AI) savollari" data-en="5,000 AI assistant questions">5,000 ta sun'iy intellekt (AI) savollari</li>
+                        <li data-ru="Доступ ко всем новым курсам в будущем" data-uz="Kelajakdagi barcha yangi kurslarga ulanish" data-en="Access to all future new courses">Kelajakdagi barcha yangi kurslarga ulanish</li>
+                        <li data-ru="Период активности: 1 месяц" data-uz="Foydalanish muddati: 1 oy" data-en="Access duration: 1 Month">Foydalanish muddati: 1 oy</li>
                     </ul>
-                    <a href="https://t.me/yuksak_academybot" class="btn-outline-gold" data-ru="Перейти в Бот" data-uz="Botga o'tish" data-en="Go to Bot">Botga o'tish</a>
+                    <a href="https://t.me/yuksak_academybot" target="_blank" class="btn-cyber-primary btn-cyber-gold" data-ru="КУПИТЬ В БОТЕ" data-uz="BOTDA SOTIB OLISH" data-en="GET IN BOT">BOTDA SOTIB OLISH</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="why-us" class="why-us-section" style="padding: 5rem 0; text-align: center;">
-        <div class="container" data-aos="fade-up">
-            <h2 class="section-title" data-ru="Почему мы?" data-uz="Nima uchun biz?" data-en="Why Us?">Nima uchun biz?</h2>
-            <p style="font-size: 1.2rem; color: var(--text-muted); max-width: 800px; margin: 0 auto; line-height: 1.6;" data-ru="YUKSAK ACADEMY — это уникальный бот-платформа. Вам не нужно скачивать тяжелые приложения. Все уроки, домашние задания и общение с ИИ происходят в вашем любимом мессенджере." data-uz="YUKSAK ACADEMY — noyob bot-platforma. Og'ir ilovalarni yuklab olishingiz shart emas. Barcha darslar, uy vazifalari va AI bilan muloqot sevimli messenjeringizda amalga oshadi." data-en="YUKSAK ACADEMY is a unique bot-platform. You don't need to download heavy apps. All lessons, homework, and AI communication happen in your favorite messenger.">YUKSAK ACADEMY — noyob bot-platforma. Og'ir ilovalarni yuklab olishingiz shart emas. Barcha darslar, uy vazifalari va AI bilan muloqot sevimli messenjeringizda amalga oshadi.</p>
-        </div>
-    </section>
-
-    <footer id="contacts" class="footer-v3" style="text-align: center; padding: 4rem 0; border-top: 1px solid rgba(255,255,255,0.1); background: var(--bg-darker);">
+    <!-- Why Us Section -->
+    <section id="why-us" class="why-us-v3" style="border-top: 1px solid rgba(0, 255, 102, 0.1);">
         <div class="container">
-            <a href="#" class="logo" style="margin-bottom: 1.5rem; display: block; font-size: 2rem;">YUKSAK <span>ACADEMY</span></a>
-            
-            <div style="margin-bottom: 2rem;">
-                <h4 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.2rem;" data-ru="Техподдержка и Контакты" data-uz="Texnik qo'llab-quvvatlash va Kontaktlar" data-en="Tech Support & Contacts">Texnik qo'llab-quvvatlash va Kontaktlar</h4>
-                <p style="font-size: 1.1rem; margin-bottom: 0.5rem;" data-ru="Техподдержка (24/7):" data-uz="Texnik yordam (24/7):" data-en="Tech Support (24/7):">Texnik yordam (24/7): <a href="https://t.me/yuksak_it" style="color: #fff; text-decoration: none; font-weight: bold;">@yuksak_it</a></p>
-                <p style="font-size: 1.1rem; margin-bottom: 0.5rem;" data-ru="Телефон:" data-uz="Telefon:" data-en="Phone:">Telefon: <span style="color: #fff; font-weight: bold;">+998 50 777 51 52</span></p>
+            <div class="section-title-wrap" data-aos="fade-up">
+                <span class="section-tag" data-ru="[ ПРЕИМУЩЕСТВА ]" data-uz="[ AFZALLIKLARIMIZ ]" data-en="[ OUR BENEFITS ]">[ AFZALLIKLARIMIZ ]</span>
+                <h2 class="section-title glow-text-green" data-ru="Почему YUKSAK ACADEMY?" data-uz="Nima Uchun Biz?" data-en="Why YUKSAK ACADEMY?">Nima Uchun Biz?</h2>
             </div>
 
-            <div style="margin-bottom: 2rem; padding-top: 1.5rem; border-top: 1px dashed rgba(255,255,255,0.1); max-width: 400px; margin-left: auto; margin-right: auto;">
-                <p style="color: var(--text-muted); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;" data-ru="Бот работает 24/7 без выходных" data-uz="Bot 24/7 dam olishsiz ishlaydi" data-en="Bot works 24/7 without days off">Bot 24/7 dam olishsiz ishlaydi</p>
-                <a href="https://t.me/yuksak_academybot" class="btn-primary-v3" data-ru="Открыть Бота" data-uz="Botni ochish" data-en="Open Bot" style="font-size: 1.2rem; padding: 1rem 3rem;">Botni ochish</a>
+            <div class="grid-3">
+                <div class="why-card" data-aos="fade-up">
+                    <span class="why-icon">📱</span>
+                    <h4 data-ru="Всегда под рукой" data-uz="Faqat Telegram-da" data-en="Always in Pocket">Faqat Telegram-da</h4>
+                    <p data-ru="Не нужно загружать тяжелые приложения. Весь процесс обучения, видео, тесты и поддержка встроены в ваш привычный мессенджер." data-uz="Og'ir ilovalarni yuklab olish shart emas. Butun o'quv jarayoni, videolar, testlar va aloqa siz uchun qulay bo'lgan Telegram ichida ishlaydi." data-en="No need to download heavy software. The entire learning process, video content, tests, and support are integrated directly into Telegram.">Og'ir ilovalarni yuklab olish shart emas. Butun o'quv jarayoni, videolar, testlar va aloqa siz uchun qulay bo'lgan Telegram ichida ishlaydi.</p>
+                </div>
+                <div class="why-card" data-aos="fade-up" data-aos-delay="100">
+                    <span class="why-icon">🧠</span>
+                    <h4 data-ru="Интеллект ИИ-Наставника" data-uz="Sun'iy Intellekt Mentori" data-en="AI-Powered Tutor">Sun'iy Intellekt Mentori</h4>
+                    <p data-ru="Возникли вопросы во время лекции? Задайте их ИИ-помощнику прямо внутри бота и мгновенно получите развернутый технический ответ." data-uz="Dars davomida savol tug'ildimi? Bot ichidagi aqlli AI-yordamchiga yozing va bir necha soniyada batafsil texnik javob oling." data-en="Have questions during a lecture? Just ask our AI assistant inside the bot and get comprehensive answers instantly.">Dars davomida savol tug'ildimi? Bot ichidagi aqlli AI-yordamchiga yozing va bir necha soniyada batafsil texnik javob oling.</p>
+                </div>
+                <div class="why-card" data-aos="fade-up" data-aos-delay="200">
+                    <span class="why-icon">🚀</span>
+                    <h4 data-ru="24/7 Активность" data-uz="To'xtovsiz Ta'lim (24/7)" data-en="24/7 Availability">To'xtovsiz Ta'lim (24/7)</h4>
+                    <p data-ru="Учитесь в удобное для вас время суток. Все автоматические модули и проверки домашних заданий активны круглосуточно без выходных." data-uz="O'zingizga qulay vaqtda bilim oling. Barcha avtomatlashtirilgan o'quv tizimlari va uy vazifalari tekshiruvi 24/7 to'xtovsiz faol." data-en="Learn at any time of the day or night. All automated systems and homework grading are fully available 24/7 without delays.">O'zingizga qulay vaqtda bilim oling. Barcha avtomatlashtirilgan o'quv tizimlari va uy vazifalari tekshiruvi 24/7 to'xtovsiz faol.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Area -->
+    <footer id="contacts" class="footer-v3">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">YUKSAK <span>[ACADEMY]</span></a>
+                    <p data-ru="Передовые образовательные технологии для будущих специалистов. Обучаем программированию, веб-дизайну, 3D графике и бухгалтерии на современном уровне." data-uz="Kelajak mutaxassislari uchun ilg'or ta'lim texnologiyalari. Dasturlash, dizayn, 3D modellashtirish va buxgalteriyani zamonaviy tizimda o'rgatamiz." data-en="Advanced educational technologies for future professionals. We teach coding, web design, 3D modeling, and accounting using cutting-edge methodologies.">Kelajak mutaxassislari uchun ilg'or ta'lim texnologiyalari. Dasturlash, dizayn, 3D modellashtirish va buxgalteriyani zamonaviy tizimda o'rgatamiz.</p>
+                </div>
+
+                <div class="footer-nav">
+                    <h4 data-ru="Навигация" data-uz="Navigatsiya" data-en="Navigation">Navigatsiya</h4>
+                    <ul>
+                        <li><a href="#about" data-ru="О нас" data-uz="Biz haqimizda" data-en="About Us">Biz haqimizda</a></li>
+                        <li><a href="#courses" data-ru="Курсы" data-uz="Kurslar" data-en="Courses">Kurslar</a></li>
+                        <li><a href="#security" data-ru="Безопасность" data-uz="Xavfsizlik" data-en="Security">Xavfsizlik</a></li>
+                        <li><a href="#pricing" data-ru="Тарифы" data-uz="Tariflar" data-en="Pricing">Tariflar</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-contact">
+                    <h4 data-ru="Контакты" data-uz="Kontaktlar" data-en="Contacts">Kontaktlar</h4>
+                    <p data-ru="Поддержка (24/7):" data-uz="Texnik yordam (24/7):" data-en="Tech Support (24/7):">Texnik yordam (24/7): <a href="https://t.me/yuksak_it" target="_blank" class="glow-text-green">@yuksak_it</a></p>
+                    <p data-ru="Телефон:" data-uz="Telefon:" data-en="Phone:">Telefon: <a href="tel:+998507775152" style="font-weight: bold;">+998 50 777 51 52</a></p>
+                    <p style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--secondary); margin-top: 1.5rem;">[ ALL SYSTEMS OPERATIONAL ]</p>
+                </div>
             </div>
 
-            <div style="margin-bottom: 2rem; padding-top: 2rem; max-width: 300px; margin-left: auto; margin-right: auto;">
-                <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;" data-ru="Основатель" data-uz="Asoschi" data-en="Founder">Asoschi</p>
-                <h3 style="color: #fff; letter-spacing: 2px; margin-top: 0.5rem;">Kamolov.A</h3>
+            <div class="founder-signature">
+                <p data-ru="Основатель платформы" data-uz="Platforma Asoschisi" data-en="Platform Founder">Platforma Asoschisi</p>
+                <h3 class="glow-text-green">KAMOLOV.A</h3>
             </div>
 
-            <p style="margin-top: 2rem; color: #555; font-size: 0.8rem;">&copy; 2026 YUKSAK ACADEMY. All rights reserved.</p>
+            <p style="text-align: center; margin-top: 3rem; color: rgba(255,255,255,0.2); font-size: 0.8rem; font-family: var(--font-mono);">&copy; 2026 YUKSAK ACADEMY. SECURED PROTOCOL VERSION 5.5.</p>
         </div>
     </footer>
 
     <script src="main.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[PWA] Service Worker registered!', reg))
+                    .catch(err => console.error('[PWA] Service Worker registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>

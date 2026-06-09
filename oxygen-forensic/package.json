@@ -1,0 +1,28 @@
+{
+  "name": "oxygen-forensic",
+  "version": "1.0.0",
+  "description": "Prototype of Oxygen Forensic Detective with hacker‑style UI",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "client": "vite",
+    "start": "concurrently \"npm run dev\" \"npm run server\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.1",
+    "file-saver": "^2.0.5",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "adbkit": "^2.12.0"
+  }
+}

@@ -5,4 +5,12 @@ __pycache__/
 *.pyc
 .vscode/
 *.db
-*.pid
+pubg_bot_folder/.env
+pubg_bot_folder/pubg.db
+
+# Build artifacts
+website/dist/
+website/build/
+website/Yuksak_Academy.exe
+*.exe
+*.spec

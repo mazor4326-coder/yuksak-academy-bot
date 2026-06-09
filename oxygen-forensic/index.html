@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oxygen Forensic Detective</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Google Font: Share Tech Mono (hacker style) -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <!-- jsPDF CDN for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <canvas id="matrixCanvas"></canvas>
+  <header>
+    <h1>Oxygen Forensic Detective</h1>
+  </header>
+  <main>
+    <section class="phone-section">
+      <h2>Подключить телефон (ADB)</h2>
+      <button id="connectBtn">Показать подключённые устройства</button>
+      <select id="deviceSelect" disabled>
+        <option value="">-- выберите устройство --</option>
+      </select>
+      <input type="text" id="filePathInput" placeholder="Путь к файлу на устройстве (например /sdcard/WhatsApp/Databases/msgstore.db)" style="width:100%;margin-top:0.5rem;" disabled />
+      <button id="pullBtn" disabled style="margin-top:0.5rem;">Скачать файл</button>
+    </section>
+
+    <section class="metadata-section">
+      <h2>Метаданные файлов</h2>
+      <table id="metadataTable">
+        <thead>
+          <tr>
+            <th>Имя</th>
+            <th>Размер</th>
+            <th>Тип</th>
+            <th>Дата изменения</th>
+            <th>SHA‑256</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="ai-section">
+      <h2>AI‑анализ изображения</h2>
+      <button id="analyzeBtn" disabled>Анализировать выбранное изображение</button>
+      <p id="aiResult"></p>
+    </section>
+
+    <section class="report-section">
+      <h2>Отчёт</h2>
+      <button id="reportBtn" disabled>Сгенерировать и скачать отчёт (PDF)</button>
+    </section>
+  </main>
+
+  <script src="bg_matrix.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

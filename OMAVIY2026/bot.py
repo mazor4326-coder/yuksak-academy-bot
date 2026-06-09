@@ -7,6 +7,8 @@ from flask import Flask
 from dotenv import load_dotenv
 import telebot
 from telebot import types
+import random
+import datetime
 
 # Load .env file
 load_dotenv()
@@ -35,15 +37,101 @@ app = Flask('')
 def home():
     return "OMAVIY2026 Ad-Posting Bot is running!"
 
-def run():
-    try:
-        port = int(os.environ.get("PORT", 10000))
-        app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
-    except:
-        pass
+def repeat_ads_loop():
+    while True:
+        now_ts = time.time()
+        due_ads = db.get_due_repeat_ads(now_ts)
+        for ad in due_ads:
+            # Post ad
+            post_ad_to_all_groups(ad['user_id'], ad['text'], ad['photo'])
+            # Calculate next post time
+            interval = ad['interval_seconds']
+            next_ts = now_ts + interval
+            # Check if beyond repeat_until
+            repeat_until_ts = time.mktime(time.strptime(ad['repeat_until'], '%Y-%m-%d %H:%M:%S'))
+            if next_ts > repeat_until_ts:
+                # Disable further repeats
+                with db.lock:
+                    conn = db.get_conn()
+                    conn.execute("UPDATE ads SET next_post_time=NULL, interval_seconds=NULL, repeat_until=NULL WHERE id=?", (ad['id'],))
+                    conn.commit()
+                    conn.close()
+            else:
+                # Update next_post_time
+                next_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_ts))
+                with db.lock:
+                    conn = db.get_conn()
+                    conn.execute("UPDATE ads SET next_post_time=? WHERE id=?", (next_str, ad['id']))
+                    conn.commit()
+                    conn.close()
+        time.sleep(60)  # check every minute
+
+# Start repeat thread near end of file after other threads
+threading.Thread(target=repeat_ads_loop, daemon=True).start()
 
 def keep_alive():
     threading.Thread(target=run, daemon=True).start()
+
+# AUTOMATIC DATABASE BACKUP TO GITHUB
+import subprocess
+
+def find_git_root(start_dir):
+    current = os.path.abspath(start_dir)
+    while True:
+        if os.path.exists(os.path.join(current, ".git")):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:
+            return None
+        current = parent
+
+def auto_git_push_loop():
+    last_pushed_mtime = 0
+    # Wait 30 seconds after startup before the first check
+    time.sleep(30)
+    while True:
+        try:
+            db_path = "promo.db"
+            if os.path.exists(db_path):
+                current_mtime = os.path.getmtime(db_path)
+                if current_mtime > last_pushed_mtime:
+                    git_root = find_git_root(os.getcwd())
+                    if git_root:
+                        db_abs = os.path.abspath(db_path)
+                        db_relative = os.path.relpath(db_abs, git_root)
+                        
+                        # Configure git user identity
+                        subprocess.run(["git", "config", "user.name", "Ommaviy Bot"], capture_output=True, cwd=git_root)
+                        subprocess.run(["git", "config", "user.email", "bot@ommaviy.uz"], capture_output=True, cwd=git_root)
+                        
+                        # Handle authentication token if set in environment variables (for Render)
+                        git_token = os.getenv("GITHUB_TOKEN")
+                        git_repo = os.getenv("GITHUB_REPO")  # e.g., github.com/username/repository
+                        if git_token and git_repo:
+                            clean_repo = git_repo.replace("https://", "").replace("http://", "")
+                            new_url = f"https://{git_token}@{clean_repo}"
+                            subprocess.run(["git", "remote", "set-url", "origin", new_url], capture_output=True, cwd=git_root)
+                        
+                        # Git commit & push
+                        subprocess.run(["git", "add", db_relative], capture_output=True, cwd=git_root)
+                        res = subprocess.run(["git", "commit", "-m", "db: Auto-update Ommaviy database [skip ci]"], capture_output=True, cwd=git_root)
+                        
+                        # Only push if there were actual changes committed
+                        if b"nothing to commit" not in res.stdout and b"nothing added" not in res.stderr:
+                            push_res = subprocess.run(["git", "push"], capture_output=True, cwd=git_root)
+                            if push_res.returncode == 0:
+                                print(f"[AUTO-GIT] Database successfully pushed to GitHub: {db_relative}")
+                            else:
+                                print(f"[AUTO-GIT] Push failed: {push_res.stderr.decode('utf-8', errors='ignore')}")
+                        
+                        last_pushed_mtime = current_mtime
+        except Exception as e:
+            print(f"[AUTO-GIT] Error syncing database: {e}")
+        # Check every 5 minutes (300 seconds)
+        time.sleep(300)
+
+def start_auto_git_push():
+    threading.Thread(target=auto_git_push_loop, daemon=True).start()
 
 # DATABASE
 DB_NAME = "promo.db"
@@ -87,7 +175,10 @@ class Database:
                 text TEXT,
                 photo TEXT,
                 status TEXT DEFAULT 'pending',
-                created_at TEXT
+                created_at TEXT,
+                repeat_until INTEGER,
+                interval_seconds INTEGER,
+                next_post_time INTEGER
             )""")
             curr.execute("""CREATE TABLE IF NOT EXISTS groups (
                 chat_id TEXT PRIMARY KEY,
@@ -125,27 +216,17 @@ class Database:
 
     def get_finance_stats(self):
         conn = self.get_conn()
-        # Today
         today_str = time.strftime('%Y-%m-%d')
         r_today = conn.execute("SELECT SUM(amount) FROM payments WHERE created_at LIKE ?", (f"{today_str}%",)).fetchone()
         today = r_today[0] if r_today and r_today[0] is not None else 0.0
-
-        # Week (7 days ago)
         seven_days_ago = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() - 7*86400))
         r_week = conn.execute("SELECT SUM(amount) FROM payments WHERE created_at >= ?", (seven_days_ago,)).fetchone()
         week = r_week[0] if r_week and r_week[0] is not None else 0.0
-
-        # Month (30 days ago)
         thirty_days_ago = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() - 30*86400))
         r_month = conn.execute("SELECT SUM(amount) FROM payments WHERE created_at >= ?", (thirty_days_ago,)).fetchone()
         month = r_month[0] if r_month and r_month[0] is not None else 0.0
-
         conn.close()
-        return {
-            'today': today,
-            'week': week,
-            'month': month
-        }
+        return {'today': today, 'week': week, 'month': month}
 
     def get_user(self, uid):
         conn = self.get_conn()
@@ -169,10 +250,15 @@ class Database:
             conn.commit()
             conn.close()
 
-    def add_group(self, chat_id, title):
+    def delete_user_and_ads(self, user_id):
         with self.lock:
             conn = self.get_conn()
-            conn.execute("INSERT OR REPLACE INTO groups (chat_id, title) VALUES (?,?)", (str(chat_id), title))
+            if user_id == 'ALL':
+                conn.execute("DELETE FROM ads")
+                conn.execute("DELETE FROM users")
+            else:
+                conn.execute("DELETE FROM ads WHERE user_id=?", (str(user_id),))
+                conn.execute("DELETE FROM users WHERE id=?", (str(user_id),))
             conn.commit()
             conn.close()
 
@@ -195,12 +281,12 @@ class Database:
         conn.close()
         return [dict(r) for r in rows]
 
-    def add_ad(self, user_id, text, photo, status='pending'):
+    def add_ad(self, user_id, text, photo, status='pending', repeat_until=None, interval_seconds=None, next_post_time=None):
         with self.lock:
             conn = self.get_conn()
             curr = conn.cursor()
-            curr.execute("INSERT INTO ads (user_id, text, photo, status, created_at) VALUES (?,?,?,?,?)",
-                         (str(user_id), text, photo, status, time.strftime('%Y-%m-%d %H:%M:%S')))
+            curr.execute("INSERT INTO ads (user_id, text, photo, status, created_at, repeat_until, interval_seconds, next_post_time) VALUES (?,?,?,?,?,?,?,?)",
+                         (str(user_id), text, photo, status, time.strftime('%Y-%m-%d %H:%M:%S'), repeat_until, interval_seconds, next_post_time))
             row_id = curr.lastrowid
             conn.commit()
             conn.close()
@@ -218,6 +304,13 @@ class Database:
             conn.execute("UPDATE ads SET status=? WHERE id=?", (status, int(ad_id)))
             conn.commit()
             conn.close()
+
+    def get_due_repeat_ads(self, now_timestamp):
+            with self.lock:
+                conn = self.get_conn()
+                rows = conn.execute("SELECT * FROM ads WHERE status='approved' AND next_post_time IS NOT NULL AND CAST(next_post_time AS INTEGER) <= ?", (int(now_timestamp),)).fetchall()
+            conn.close()
+            return [dict(r) for r in rows]
 
     def get_user_ads_count(self, user_id):
         conn = self.get_conn()
@@ -267,7 +360,7 @@ TEXTS = {
         'publish_btn': "🚀 Guruh va kanallarga yuklash",
         'sub_active': "✅ Faol ({expire} gacha)",
         'sub_none': "❌ Mavjud emas",
-        'profile_txt': "👤 *Sizning profilingiz:*\n\n📞 Telefon: `{phone}`\n💎 Obuna: *{sub}*\n📣 Jami e'lonlar: `{ads_count}`",
+        'profile_txt': "👤 *Sizning profilingiz:*\n\n📞 Телефон: `{phone}`\n💎 Obuna: *{sub}*\n📣 Jami e'lonlar: `{ads_count}`",
         'buy_sub_txt': "💳 *OBUNA SOTIB OLISH (20 000 so'm / 30 kun)*\n\nTo'lov uchun quyidagi kartalardan biriga pul o'tkazing:\n\n💳 HUMO: `9860 1604 2025 6085` (KAMOLOV A.)\n💳 UZCARD: `5440 8100 1696 6946` (KAMOLOV A.)\n\n📸 *To'lovdan so'ng skrinshot yoki rasm (chek)ni yuboring.* Administrator to'lovni tekshirib, obunangizni faollashtiradi.",
         'no_sub_warn': "🔒 E'lon joylashtirish faqat faol obunaga ega foydalanuvchilar uchun ruxsat etiladi.\n\nIltimos, faollashtirish uchun «💳 Obuna sotib olish» bo'limiga o'ting.",
         'create_ad_txt': "✍️ *E'loningiz matnini kiriting:*\n\nU barcha reklama guruhlari va kanallariga yuboriladi.",
@@ -331,7 +424,7 @@ def get_main_kb(uid, lang, is_owner):
 def get_admin_kb():
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row("📊 Статистика", "💰 Финансы", "📢 Рассылка")
-    kb.row("👥 Группы и Каналы", "⬅️ В меню")
+    kb.row("👥 Группы и Каналы", "🗑️ Удалить пользователя", "🗑️ Удалить всех пользователей", "⬅️ В меню")
     return kb
 
 def get_groups_mgmt_kb():
@@ -365,7 +458,6 @@ def post_ad_to_all_groups(user_id, text, photo_id):
         except Exception as e:
             print(f"Error sending ad to group {chat_id}: {e}")
 
-    db.add_ad(user_id, text, photo_id)
     return sent_count > 0
 
 # Start Command
@@ -481,13 +573,22 @@ def handle_all_messages(m):
                 bot.send_message(cid, "📢 *Отправьте сообщение для рассылки (текст или фото с описанием):*", parse_mode='Markdown', reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("⬅️ Назад"))
                 return
 
-            elif m.text == "👥 Группы и Каналы":
-                db.update_user(uid, step='admin_groups_mgmt')
-                bot.send_message(cid, "👥 *Управление целевыми группами и каналами:*", parse_mode='Markdown', reply_markup=get_groups_mgmt_kb())
+            if m.text == "🗑️ Удалить всех пользователей":
+                db.update_user(uid, step='admin_del_all')
+                bot.send_message(cid, "🗑️ *Подтвердите полное удаление всех пользователей и объявлений?*",
+                                   parse_mode='Markdown',
+                                   reply_markup=types.ReplyKeyboardMarkup(resize_keyboard=True).add("✅ Да", "❌ Нет"))
                 return
 
-        elif step == 'admin_groups_mgmt':
-            if m.text == "⬅️ Назад":
+        elif step == 'admin_del_all':
+            if m.text == "✅ Да":
+                # Delete all users and ads
+                db.delete_user_and_ads('ALL')  # special handling in method
+                bot.send_message(cid, "✅ Все пользователи и их объявления удалены.", parse_mode='Markdown')
+                db.update_user(uid, step='admin_main')
+                bot.send_message(cid, "🛠️ *Панель администратора*", parse_mode='Markdown', reply_markup=get_admin_kb())
+                return
+            elif m.text == "❌ Нет" or m.text == "⬅️ Назад":
                 db.update_user(uid, step='admin_main')
                 bot.send_message(cid, "🛠️ *Панель администратора*", parse_mode='Markdown', reply_markup=get_admin_kb())
                 return
@@ -655,8 +756,13 @@ def handle_all_messages(m):
 
     # State: Awaiting Ad Text
     if step == 'ad_text':
-        if not m.text:
-            bot.send_message(cid, TEXTS[lang]['create_ad_txt'], parse_mode='Markdown')
+        # Check for prohibited content in ad text
+        if any(word in m.text.lower() for word in ["казино", "gambling", "porn", "порно", "adult", "sex"]):
+            # Ban user and delete their ads
+            db.ban_user(uid)
+            db.delete_user_and_ads(uid)
+            bot.send_message(cid, "⚠️ Ваше сообщение содержит запрещённый контент. Вы заблокированы.", parse_mode='Markdown')
+            db.update_user(uid, step='main')
             return
 
         user_ads_in_progress[uid] = {'text': m.text, 'photo': None}
@@ -713,12 +819,6 @@ def handle_all_messages(m):
             ad = user_ads_in_progress.get(uid)
             if not ad:
                 bot.send_message(cid, "Ошибка. Пожалуйста, начните заново.")
-                db.update_user(uid, step='main')
-                return
-
-            groups = db.get_groups()
-            if not groups:
-                bot.send_message(cid, TEXTS[lang]['group_not_found'], reply_markup=get_main_kb(uid, lang, is_owner))
                 db.update_user(uid, step='main')
                 return
 
@@ -839,7 +939,20 @@ def handle_callbacks(call):
         ad_id = data.replace("ad_approve_", "")
         ad = db.get_ad(ad_id)
         if ad:
+            # After admin approves ad, set repeat parameters
+            interval = random.randint(300, 600)  # 5-10 minutes in seconds
+            repeat_until_dt = time.time() + 30*24*60*60  # 30 days
+            next_post_time = time.time() + interval
+            repeat_until_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(repeat_until_dt))
+            next_post_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_post_time))
             db.update_ad_status(ad_id, 'approved')
+            # Update ad with repeat info
+            with db.lock:
+                conn = db.get_conn()
+                conn.execute("UPDATE ads SET repeat_until=?, interval_seconds=?, next_post_time=? WHERE id=?",
+                             (repeat_until_str, interval, next_post_str, ad_id))
+                conn.commit()
+                conn.close()
             success = post_ad_to_all_groups(ad['user_id'], ad['text'], ad['photo'])
             bot.answer_callback_query(call.id, "Объявление опубликовано")
             status_suffix = "\n\n🟢 *Статус: Одобрено и Опубликовано*"
@@ -898,6 +1011,7 @@ def handle_callbacks(call):
 
 if __name__ == "__main__":
     keep_alive()
+    start_auto_git_push()
     print("[BOT] Removing webhook...")
     try:
         bot.remove_webhook()
